@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fil">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Top Watch 101 watch catalog">
+  <title>Top Watch 101</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="top-theme">
+  <header class="simple-header">
+    <a class="brand-lockup" href="#top">
+      <img src="assets/brand-avatar.jpg" alt="Top Watch 101 logo">
+      <strong>Top Watch 101</strong>
+    </a>
+    <div class="header-controls">
+      <div class="language-toggle" role="group" aria-label="Language">
+        <button id="filButton" class="language-button active" type="button">FIL</button>
+        <span>|</span>
+        <button id="engButton" class="language-button" type="button">ENG</button>
+      </div>
+      <a id="headerMessage" class="header-message" data-message-link target="_blank" rel="noopener">I-message Kami</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="brand-hero">
+      <img class="hero-cover" src="assets/brand-cover.jpg" alt="Top Watch 101 cover">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <span class="brand-kicker">TOP WATCH 101</span>
+        <h1 id="heroTitle">Relo para sa modernong lalaki.</h1>
+        <p id="heroDescription">Hanapin ayon sa model, style, o SKU. Tingnan ang detalye, tapos i-message kami para mag-reserve.</p>
+        <div class="hero-search">
+          <span>⌕</span>
+          <input id="heroSearch" type="search" placeholder="Hanapin ang relo, style, o SKU">
+          <button id="heroSearchButton">Hanapin</button>
+        </div>
+        <a id="heroMessage" class="primary-action" data-message-link target="_blank" rel="noopener">I-message ang Top Watch 101</a>
+      </div>
+    </section>
+
+    <section class="catalog-shell">
+      <div class="catalog-intro">
+        <div>
+          <span id="fastPicksLabel" class="section-label">MABILISANG PILI</span>
+          <h2 id="topSellingTitle">Pinakamabentang Relo</h2>
+          <p id="topSellingDescription">Mga relong madalas hanapin batay sa naitalang benta.</p>
+        </div>
+      </div>
+      <div id="topSellers" class="horizontal-products"></div>
+
+      <div class="catalog-title">
+        <div>
+          <span id="catalogLabel" class="section-label">CATALOG</span>
+          <h2 id="availableTitle">Mga Available na Relo</h2>
+        </div>
+        <span id="inventoryStatus">Sample mode — susunod ang koneksyon sa sheet</span>
+      </div>
+
+      <div class="sticky-search">
+        <input id="catalogSearch" type="search" placeholder="I-type ang brand, model, style, o SKU">
+        <select id="categoryFilter">
+          <option id="allStylesOption" value="">Lahat ng Style</option>
+        </select>
+      </div>
+
+      <div id="productGrid" class="product-grid"></div>
+      <div id="emptyState" class="empty-state hidden">
+        <span id="emptyMessage">Walang nakitang relo. Subukan ang ibang salita o i-message kami.</span>
+      </div>
+    </section>
+
+    <section class="quick-order">
+      <div>
+        <span id="checkoutLabel" class="section-label">WALANG KOMPLIKADONG CHECKOUT</span>
+        <h2 id="quickOrderTitle">May nagustuhan kang relo?</h2>
+        <p id="quickOrderDescription">I-tap ang I-message Kami, ipadala ang SKU, at iko-confirm namin ang availability at delivery.</p>
+      </div>
+      <a id="quickOrderMessage" class="primary-action" data-message-link target="_blank" rel="noopener">I-message Kami Ngayon</a>
+    </section>
+  </main>
+
+  <a class="floating-message" data-message-link target="_blank" rel="noopener">
+    <span>●</span> <span id="floatingMessageText">I-message Kami</span>
+  </a>
+
+  <dialog id="productDialog">
+    <button id="closeDialog" class="dialog-close" aria-label="Close">×</button>
+    <div id="dialogBody"></div>
+  </dialog>
+
+  <footer>
+    <strong>Top Watch 101</strong>
+    <span id="footerTagline">Quality watches. Tapat na presyo. Simpleng order.</span>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
