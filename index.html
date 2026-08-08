@@ -9,8 +9,46 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    body.welcome-open{overflow:hidden}
+    .welcome-overlay{position:fixed;inset:0;z-index:200;background:rgba(3,3,4,.94);backdrop-filter:blur(18px);display:grid;place-items:center;padding:24px;opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease}
+    .welcome-overlay.show{opacity:1;visibility:visible}
+    .welcome-card{position:relative;width:min(420px,94vw);padding:16px 16px 18px;background:linear-gradient(180deg,#171719,#0d0d0f);border:1px solid rgba(214,170,82,.35);border-radius:22px;box-shadow:0 32px 100px rgba(0,0,0,.72);text-align:center}
+    .welcome-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 42px 14px;color:#f3d58c;font-size:.78rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+    .welcome-brand img{width:38px;height:38px;border-radius:8px;object-fit:cover;border:1px solid rgba(214,170,82,.5)}
+    .welcome-close{position:absolute;right:12px;top:12px;width:38px;height:38px;border:1px solid rgba(255,255,255,.12);border-radius:50%;background:#202024;color:#fff;font-size:1.3rem;cursor:pointer}
+    .welcome-video{width:min(300px,100%);margin:auto;padding:8px;background:#080809;border:1px solid rgba(255,255,255,.1);border-radius:16px;overflow:hidden}
+    .welcome-video iframe{display:block;width:100%;aspect-ratio:267/476;height:auto;border:0;border-radius:10px}
+    .welcome-title{margin:16px 0 4px;font-family:"Barlow Condensed",Arial,sans-serif;font-size:1.7rem;line-height:1;text-transform:uppercase}
+    .welcome-copy{margin:0 auto 12px;max-width:320px;color:#aaa6a0;font-size:.86rem}
+    .welcome-enter{width:100%;min-height:46px;border:0;border-radius:10px;background:#d6aa52;color:#111;font-weight:900;cursor:pointer}
+    @media(max-height:720px){.welcome-card{width:min(360px,94vw);padding:12px}.welcome-video{width:min(230px,100%)}.welcome-title{font-size:1.4rem;margin-top:10px}.welcome-copy{display:none}}
+  </style>
 </head>
 <body class="top-theme">
+  <div id="welcomeOverlay" class="welcome-overlay" role="dialog" aria-modal="true" aria-label="Welcome to Top Watch 102">
+    <div class="welcome-card">
+      <button id="welcomeClose" class="welcome-close" type="button" aria-label="Close welcome video">×</button>
+      <div class="welcome-brand">
+        <img src="assets/top-watch-102-logo.jpg" alt="Top Watch 102 logo">
+        <span>Top Watch 102</span>
+      </div>
+      <div class="welcome-video">
+        <iframe
+          title="Top Watch 102 Facebook Reel"
+          src="https://www.facebook.com/plugins/video.php?height=476&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F3849954971973651&show_text=false&width=267&t=0"
+          scrolling="no"
+          frameborder="0"
+          allowfullscreen="true"
+          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+        </iframe>
+      </div>
+      <h2 class="welcome-title">Welcome to Top Watch 102</h2>
+      <p class="welcome-copy">See what we offer, then browse our live inventory.</p>
+      <button id="welcomeEnter" class="welcome-enter" type="button">Enter Store</button>
+    </div>
+  </div>
+
   <header class="simple-header">
     <a class="brand-lockup" href="#top">
       <img src="assets/top-watch-102-logo.jpg" alt="Top Watch 102 logo">
@@ -29,7 +67,7 @@
     <section class="brand-hero">
       <img class="hero-cover" src="assets/brand-cover.jpg" alt="Top Watch 102 cover">
       <div class="hero-overlay"></div>
-      <div class="hero-layout">
+      <div class="hero-layout single-column">
         <div class="hero-copy">
           <span class="brand-kicker">TOP WATCH 102</span>
           <h1 id="heroTitle">Relo para sa modernong lalaki.</h1>
@@ -39,19 +77,6 @@
             <input id="heroSearch" type="search" placeholder="Hanapin ang relo, brand, o reference">
             <button id="heroSearchButton">Hanapin</button>
           </div>
-        </div>
-        <div class="hero-video" aria-label="Top Watch 102 featured video">
-          <iframe
-            title="Top Watch 102 Facebook Reel"
-            src="https://www.facebook.com/plugins/video.php?height=476&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F3849954971973651&show_text=false&width=267&t=0"
-            width="267"
-            height="476"
-            style="border:none;overflow:hidden"
-            scrolling="no"
-            frameborder="0"
-            allowfullscreen="true"
-            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
-          </iframe>
         </div>
       </div>
     </section>
@@ -123,6 +148,29 @@
     <span id="footerTagline">Quality watches. Tapat na presyo. Simpleng order.</span>
   </footer>
 
+  <script>
+    (()=>{
+      const overlay=document.getElementById('welcomeOverlay');
+      const close=document.getElementById('welcomeClose');
+      const enter=document.getElementById('welcomeEnter');
+      const key='topWatch102WelcomeSeen';
+      const hide=()=>{
+        overlay.classList.remove('show');
+        document.body.classList.remove('welcome-open');
+        try{sessionStorage.setItem(key,'1')}catch(e){}
+      };
+      let seen=false;
+      try{seen=sessionStorage.getItem(key)==='1'}catch(e){}
+      if(!seen){
+        document.body.classList.add('welcome-open');
+        requestAnimationFrame(()=>overlay.classList.add('show'));
+      }
+      close.addEventListener('click',hide);
+      enter.addEventListener('click',hide);
+      overlay.addEventListener('click',e=>{if(e.target===overlay)hide()});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('show'))hide()});
+    })();
+  </script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
