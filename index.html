@@ -13,7 +13,7 @@
 <body class="top-theme">
   <header class="simple-header">
     <a class="brand-lockup" href="#top">
-      <img src="assets/brand-avatar.jpg" alt="Top Watch 102 logo">
+      <img src="assets/top-watch-102-logo.jpg" alt="Top Watch 102 logo">
       <strong>Top Watch 102</strong>
     </a>
     <div class="header-controls">
@@ -22,7 +22,6 @@
         <span>|</span>
         <button id="engButton" class="language-button" type="button">ENG</button>
       </div>
-      <a id="headerMessage" class="header-message" data-message-link target="_blank" rel="noopener">I-message Kami</a>
     </div>
   </header>
 
@@ -30,63 +29,89 @@
     <section class="brand-hero">
       <img class="hero-cover" src="assets/brand-cover.jpg" alt="Top Watch 102 cover">
       <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <span class="brand-kicker">TOP WATCH 102</span>
-        <h1 id="heroTitle">Relo para sa modernong lalaki.</h1>
-        <p id="heroDescription">Hanapin ayon sa model, style, o SKU. Tingnan ang detalye, tapos i-message kami para mag-reserve.</p>
-        <div class="hero-search">
-          <span>⌕</span>
-          <input id="heroSearch" type="search" placeholder="Hanapin ang relo, style, o SKU">
-          <button id="heroSearchButton">Hanapin</button>
+      <div class="hero-layout">
+        <div class="hero-copy">
+          <span class="brand-kicker">TOP WATCH 102</span>
+          <h1 id="heroTitle">Relo para sa modernong lalaki.</h1>
+          <p id="heroDescription">Hanapin ayon sa model, brand, o reference. Tingnan ang detalye at umorder direkta sa amin.</p>
+          <div class="hero-search">
+            <span>⌕</span>
+            <input id="heroSearch" type="search" placeholder="Hanapin ang relo, brand, o reference">
+            <button id="heroSearchButton">Hanapin</button>
+          </div>
         </div>
-        <a id="heroMessage" class="primary-action" data-message-link target="_blank" rel="noopener">I-message ang Top Watch 102</a>
+        <div class="hero-video" aria-label="Top Watch 102 featured video">
+          <iframe
+            title="Top Watch 102 Facebook Reel"
+            src="https://www.facebook.com/plugins/video.php?height=476&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F3849954971973651&show_text=false&width=267&t=0"
+            width="267"
+            height="476"
+            style="border:none;overflow:hidden"
+            scrolling="no"
+            frameborder="0"
+            allowfullscreen="true"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+          </iframe>
+        </div>
       </div>
     </section>
 
     <section class="catalog-shell">
-      <div class="catalog-intro">
+      <div class="catalog-intro carousel-heading">
         <div>
           <span id="fastPicksLabel" class="section-label">MABILISANG PILI</span>
           <h2 id="topSellingTitle">Pinakamabentang Relo</h2>
-          <p id="topSellingDescription">Mga relong madalas hanapin batay sa naitalang benta.</p>
+          <p id="topSellingDescription">Top 6 na relo batay sa naitalang benta.</p>
+        </div>
+        <div class="carousel-controls">
+          <button id="topPrev" type="button" aria-label="Previous watches">‹</button>
+          <button id="topNext" type="button" aria-label="Next watches">›</button>
         </div>
       </div>
-      <div id="topSellers" class="horizontal-products"></div>
+      <div class="top-carousel-window">
+        <div id="topSellers" class="top-carousel-track"></div>
+      </div>
 
       <div class="catalog-title">
         <div>
           <span id="catalogLabel" class="section-label">CATALOG</span>
           <h2 id="availableTitle">Mga Available na Relo</h2>
         </div>
-        <span id="inventoryStatus">Live inventory connection pending</span>
+        <span id="inventoryStatus">Loading live inventory…</span>
       </div>
 
       <div class="sticky-search">
-        <input id="catalogSearch" type="search" placeholder="I-type ang brand, model, style, o SKU">
-        <select id="categoryFilter">
-          <option id="allStylesOption" value="">Lahat ng Style</option>
-        </select>
+        <input id="catalogSearch" type="search" placeholder="I-type ang brand, model, style, o reference">
+        <div class="brand-filter">
+          <button id="brandFilterButton" class="brand-filter-button" type="button">Lahat ng Brand ▾</button>
+          <div id="brandFilterMenu" class="brand-filter-menu hidden"></div>
+        </div>
       </div>
 
       <div id="productGrid" class="product-grid"></div>
       <div id="emptyState" class="empty-state hidden">
-        <span id="emptyMessage">Walang nakitang relo. Subukan ang ibang salita o i-message kami.</span>
+        <span id="emptyMessage">Walang nakitang relo. Subukan ang ibang brand o search term.</span>
       </div>
     </section>
 
     <section class="quick-order">
       <div>
-        <span id="checkoutLabel" class="section-label">WALANG KOMPLIKADONG CHECKOUT</span>
-        <h2 id="quickOrderTitle">May nagustuhan kang relo?</h2>
-        <p id="quickOrderDescription">I-tap ang I-message Kami, ipadala ang SKU, at iko-confirm namin ang availability at delivery.</p>
+        <span id="checkoutLabel" class="section-label">SPECIAL REQUEST</span>
+        <h2 id="quickOrderTitle">Hindi mo makita ang gusto mong relo?</h2>
+        <p id="quickOrderDescription">Sabihin sa amin ang desired watch mo at tutulungan ka naming hanapin ito.</p>
       </div>
-      <a id="quickOrderMessage" class="primary-action" data-message-link target="_blank" rel="noopener">I-message Kami Ngayon</a>
+      <a id="requestWatchLink" class="primary-action" target="_blank" rel="noopener">Request a Watch</a>
     </section>
   </main>
 
-  <a class="floating-message" data-message-link target="_blank" rel="noopener">
-    <span>●</span> <span id="floatingMessageText">I-message Kami</span>
-  </a>
+  <div id="contactPanel" class="contact-panel hidden" aria-live="polite">
+    <strong>Contact info</strong>
+    <a id="contactPhone" href="#"><span>☎</span><span id="contactPhoneText"></span></a>
+    <a id="contactEmail" href="#"><span>✉</span><span id="contactEmailText"></span></a>
+    <a id="contactWhatsapp" href="#" target="_blank" rel="noopener"><span>◉</span><span id="contactWhatsappText"></span></a>
+    <a id="contactFacebook" href="#" target="_blank" rel="noopener"><span>◉</span><span>Top Watch 102</span></a>
+  </div>
+  <button id="contactToggle" class="floating-message" type="button"><span>●</span> Message Us</button>
 
   <dialog id="productDialog">
     <button id="closeDialog" class="dialog-close" aria-label="Close">×</button>
@@ -99,7 +124,6 @@
   </footer>
 
   <script src="config.js"></script>
-  <script src="data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
