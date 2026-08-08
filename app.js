@@ -7,7 +7,7 @@ const I18N={
     heroTitle:"Relo para sa modernong lalaki.",
     heroDescription:"Hanapin ayon sa model, style, o SKU. Tingnan ang detalye, tapos i-message kami para mag-reserve.",
     headerMessage:"I-message Kami",
-    heroMessage:"I-message ang Top Watch 101",
+    heroMessage:"I-message ang Top Watch 102",
     searchPlaceholder:"Hanapin ang relo, style, o SKU",
     searchButton:"Hanapin",
     fastPicksLabel:"MABILISANG PILI",
@@ -36,7 +36,7 @@ const I18N={
     heroTitle:"Built for the modern man.",
     heroDescription:"Search by model, style, or SKU. View premium details, then message us to reserve.",
     headerMessage:"Message Us",
-    heroMessage:"Message Top Watch 101",
+    heroMessage:"Message Top Watch 102",
     searchPlaceholder:"Search watch, style, or SKU",
     searchButton:"Search",
     fastPicksLabel:"FAST PICKS",
@@ -140,7 +140,7 @@ function updateInventoryStatus(){
 async function loadProducts(){
   try{
     if(!C.apiUrl){
-      state.products=samples;
+      state.products=C.sampleMode?samples:[];
       state.inventoryMode="sample";
     }else{
       const separator=C.apiUrl.includes("?")?"&":"?";
@@ -149,7 +149,7 @@ async function loadProducts(){
       if(!response.ok)throw new Error(`HTTP ${response.status}`);
       const data=await response.json();
       if(!data.success||!Array.isArray(data.products))throw new Error(data.error||"Invalid inventory response");
-      state.products=data.products;
+      state.products=data.products.filter(p=>Number(p.stock||0)>0&&p.visible!==false);
       state.inventoryMode="live";
       state.inventoryCount=state.products.length;
     }
