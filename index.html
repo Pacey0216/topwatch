@@ -52,6 +52,6 @@
   <footer><strong>Top Watch 102</strong><span id="footerTagline">Quality watches. Tapat na presyo. Simpleng order.</span></footer>
 
   <script>(()=>{const overlay=document.getElementById('welcomeOverlay'),close=document.getElementById('welcomeClose'),enter=document.getElementById('welcomeEnter'),key='topWatch102WelcomeSeen';const hide=()=>{overlay.classList.remove('show');document.body.classList.remove('welcome-open');try{sessionStorage.setItem(key,'1')}catch(e){}};let seen=false;try{seen=sessionStorage.getItem(key)==='1'}catch(e){}if(!seen){document.body.classList.add('welcome-open');requestAnimationFrame(()=>overlay.classList.add('show'))}close.addEventListener('click',hide);enter.addEventListener('click',hide);overlay.addEventListener('click',e=>{if(e.target===overlay)hide()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&overlay.classList.contains('show'))hide()})})();</script>
-  <script src="config.js"></script><script src="store-v3.js"></script>
+  <script src="config.js"></script><script src="store-v3.js"></script><script src="variant-fix.js"></script>
 </body>
 </html>
