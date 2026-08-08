@@ -1,36 +1,29 @@
-# Top Watch 101 simplified storefront
+# Top Watch 102 storefront
 
-## Included design decisions
-- Search is visible immediately in the hero section.
-- Only one header action: Message Us.
-- Top-selling products appear before the full catalog.
-- Product cards stay simple.
-- Product details open in a premium full product profile.
-- A floating Message Us button stays visible on mobile.
-- Google Sheet/API integration is intentionally disabled for design review.
+## Current setup
+- Uses the shared `Top Watch 102 + Master Pogi Inventory` Google Sheet.
+- The storefront is prepared for the shared Apps Script inventory API.
+- Sample inventory is disabled.
+- Only products with stock greater than 0 are intended to appear.
+- `Website Visibility = No` hides a product even when stock exists.
+- Filipino/Taglish is the default interface with an English toggle.
 
-## Current mode
-The site uses sample unbranded products from `data.js`.
+## Shared inventory
+The live catalog source is the `Products` tab:
 
-## Later connection
-The shared sheet reference is already stored in `config.js`, but the website still needs a deployed Apps Script `/exec` endpoint.
+https://docs.google.com/spreadsheets/d/1ljK2RqkdA8E3iEpEutrhMnTurxGqXwY6Kb8yF2hW3S8/edit?gid=1807963011#gid=1807963011
 
-When ready:
-1. Deploy the Apps Script inventory API.
-2. Edit `config.js`.
-3. Paste the URL into `apiUrl`.
-4. Set `sampleMode` to false if desired.
-5. Replace the Messenger placeholder.
+Both Top Watch 102 and Master Pogi use the same stock pool.
 
-Shared sheet:
-https://docs.google.com/spreadsheets/d/1ljK2RqkdA8E3iEpEutrhMnTurxGqXwY6Kb8yF2hW3S8/edit?gid=537048309#gid=537048309
+## Remaining deployment step
+Deploy the shared Apps Script inventory API, then paste the same `/exec` URL into `apiUrl` in this repository's `config.js` and in `Pacey0216/masterpogi-website/config.js`.
 
-Use this storefront only for products you are legally permitted to sell.
+The Apps Script source and deployment instructions are stored in:
 
+`Pacey0216/masterpogi-website/apps-script/`
 
 ## Language behavior
 - Filipino/Taglish is the default interface.
-- Visitors can switch to English using the small `FIL | ENG` toggle.
+- Visitors can switch to English using `FIL | ENG`.
 - The browser remembers the selected language.
-- Product names, categories, grades, prices, stock information, descriptions, specifications, and watch details remain in English.
-- The toggle runs entirely in the browser and does not materially increase AWS usage.
+- Product names, brands, grades, prices, stock, descriptions, specifications, and watch details remain in English.
