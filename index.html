@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
   <style>
     body.welcome-open{overflow:hidden}
@@ -22,6 +23,8 @@
     .welcome-title{margin:16px 0 4px;font-family:"Barlow Condensed",Arial,sans-serif;font-size:1.7rem;line-height:1;text-transform:uppercase}
     .welcome-copy{margin:0 auto 12px;max-width:320px;color:#aaa6a0;font-size:.86rem}
     .welcome-enter{width:100%;min-height:46px;border:0;border-radius:10px;background:#d6aa52;color:#111;font-weight:900;cursor:pointer}
+    .contact-panel .contact-icon{width:24px;display:inline-flex;justify-content:center;align-items:center;flex:0 0 24px;color:#fff;font-size:1.15rem}
+    .contact-panel .contact-email-value{color:#5ca9ff}
     @media(max-height:720px){.welcome-card{width:min(360px,94vw);padding:12px}.welcome-video{width:min(230px,100%)}.welcome-title{font-size:1.4rem;margin-top:10px}.welcome-copy{display:none}}
   </style>
 </head>
@@ -131,10 +134,10 @@
 
   <div id="contactPanel" class="contact-panel hidden" aria-live="polite">
     <strong>Contact info</strong>
-    <a id="contactPhone" href="#"><span>☎</span><span id="contactPhoneText"></span></a>
-    <a id="contactEmail" href="#"><span>✉</span><span id="contactEmailText"></span></a>
-    <a id="contactWhatsapp" href="#" target="_blank" rel="noopener"><span>◉</span><span id="contactWhatsappText"></span></a>
-    <a id="contactFacebook" href="#" target="_blank" rel="noopener"><span>◉</span><span>Top Watch 102</span></a>
+    <a id="contactPhone" href="#"><span class="contact-icon"><i class="fa-solid fa-phone"></i></span><span id="contactPhoneText"></span></a>
+    <a id="contactEmail" href="#"><span class="contact-icon"><i class="fa-regular fa-envelope"></i></span><span id="contactEmailText" class="contact-email-value"></span></a>
+    <a id="contactWhatsapp" href="#" target="_blank" rel="noopener"><span class="contact-icon"><i class="fa-brands fa-whatsapp"></i></span><span id="contactWhatsappText"></span></a>
+    <a id="contactFacebook" href="#" target="_blank" rel="noopener"><span class="contact-icon"><i class="fa-brands fa-facebook-messenger"></i></span><span>Top Watch 102</span></a>
   </div>
   <button id="contactToggle" class="floating-message" type="button"><span>●</span> Message Us</button>
 
