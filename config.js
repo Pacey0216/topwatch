@@ -4,7 +4,7 @@ window.STORE_CONFIG = {
   "sheetReference": "https://docs.google.com/spreadsheets/d/1ljK2RqkdA8E3iEpEutrhMnTurxGqXwY6Kb8yF2hW3S8/edit?gid=1807963011#gid=1807963011",
   "storeFilter": "topwatch102",
   "messengerUrl": "https://m.me/61587432892689",
-  "facebookUrl": "https://www.facebook.com/profile.php?id=61587432892689",
+  "facebookUrl": "https://m.me/61587432892689",
   "phoneDisplay": "0906 160 6316",
   "phoneUrl": "tel:+639061606316",
   "email": "kidaweeda977@yahoo.com",
