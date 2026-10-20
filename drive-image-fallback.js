@@ -27,10 +27,8 @@
   function bind(img) {
     if (!isImage(img) || img.dataset.driveFallbackBound === '1') return;
     const id = extractDriveId(img.currentSrc || img.src);
-    if (!id) return;
-
     img.dataset.driveFallbackBound = '1';
-    const sources = [img.currentSrc || img.src, ...fallbackUrls(id)];
+    const sources = [...new Set([img.currentSrc || img.src, ...(id ? fallbackUrls(id) : [])])];
     let attempt = 0;
 
     img.addEventListener('error', () => {
@@ -40,6 +38,8 @@
         return;
       }
 
+      img.dispatchEvent(new Event('watchimageerror', { bubbles: true }));
+      if (!img.isConnected) return;
       img.removeAttribute('alt');
       img.style.display = 'none';
       const holder = img.parentElement;

@@ -5,6 +5,7 @@
   const v4ImageCache = new Map();
   let v4TopPage = 0;
   let v4GalleryToken = 0;
+  let v4Gallery = { images: [], alt: '', index: 0 };
 
   buildHeaderSearch();
   buildFilterTiles();
@@ -44,6 +45,7 @@
   const baseSetLanguage = setLanguage;
   setLanguage = function(language) {
     baseSetLanguage(language);
+    window.ImageViewer?.setLanguage(state.language);
     applyV4Language();
     syncFilterOptions();
   };
@@ -51,16 +53,23 @@
   const baseWireVariantButtons = wireVariantButtons;
   wireVariantButtons = function(p, vars, sizes, grades) {
     baseWireVariantButtons(p, vars, sizes, grades);
-    const refreshGallery = () => setTimeout(() => updateGalleryForChoice(p, vars), 0);
+    const refreshGallery = () => updateGalleryForChoice(p, vars);
     document.querySelectorAll('.size-tile,.grade-tile').forEach(button => button.addEventListener('click', refreshGallery));
-    setTimeout(() => updateGalleryForChoice(p, vars), 0);
+    updateGalleryForChoice(p, vars);
   };
 
   const baseOpenProfile = openProfile;
   openProfile = function(p, focus = false) {
+    window.ImageViewer?.close();
+    ++v4GalleryToken;
     baseOpenProfile(p, focus);
     enhanceGallery(p);
   };
+  $('productDialog')?.addEventListener('close', () => {
+    if ($('productDialog').open) return;
+    ++v4GalleryToken;
+    window.ImageViewer?.close();
+  });
 
   $('catalogSearch')?.addEventListener('input', applyV4Filters);
   applyV4Language();
@@ -154,19 +163,45 @@
     const photo = document.querySelector('#dialogBody .profile-image');
     if (!photo || photo.classList.contains('v4-gallery')) return;
     photo.classList.add('v4-gallery');
-    photo.innerHTML = `<div id="v4GalleryMain" class="v4-gallery-main">${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}">` : '⌚'}</div><div id="v4GalleryThumbs" class="v4-gallery-thumbs"></div>`;
+    photo.innerHTML = '<button id="v4GalleryMain" class="v4-gallery-main" type="button" aria-haspopup="dialog"></button><div id="v4GalleryThumbs" class="v4-gallery-thumbs" role="group"></div>';
+    $('v4GalleryMain').onclick = () => {
+      if (!v4Gallery.images.length) return;
+      window.ImageViewer?.open({
+        images: v4Gallery.images.map(url => ({ url, alt: v4Gallery.alt })),
+        index: v4Gallery.index,
+        language: state.language,
+        onChange: selectGalleryImage,
+        onClose: () => { if ($('productDialog').open) $('v4GalleryMain')?.focus({ preventScroll: true }); }
+      });
+    };
+    photo.addEventListener('watchimageerror', event => {
+      const url = event.target.dataset.gallerySource;
+      if (!url || !v4Gallery.images.includes(url)) return;
+      const selected = v4Gallery.images[v4Gallery.index];
+      setGallery(v4Gallery.images.filter(image => image !== url), v4Gallery.alt, selected);
+    });
     setGallery([p.image].filter(Boolean), p.name);
   }
 
   async function updateGalleryForChoice(p, vars) {
+    const token = ++v4GalleryToken;
+    window.ImageViewer?.close();
     enhanceGallery(p);
     const exact = vars.filter(v => (!state.choice.size || v.size === state.choice.size) && (!state.choice.grade || v.grade === state.choice.grade));
-    const complete = !!state.choice.size && !!state.choice.grade && exact.length === 1 && exact[0].sku;
-    if (!complete) { setGallery([p.image].filter(Boolean), p.name); return; }
-    const token = ++v4GalleryToken;
-    const live = await fetchVariantImages(exact[0].sku);
-    if (token !== v4GalleryToken || state.activeProduct !== p) return;
-    setGallery(uniq([p.image, ...live].filter(Boolean)), `${p.name} ${exact[0].size} ${exact[0].grade}`);
+    const variant = exact.length === 1 ? exact[0] : null;
+    if (!variant) { setGallery([p.image].filter(Boolean), p.name); return; }
+    const alt = [p.name, variant.size, variant.grade].filter(Boolean).join(' ');
+    // The current inventory provides photos in upload order, including empty slots.
+    // An explicitly empty variant gallery must not borrow another grade's image.
+    if (Array.isArray(variant.photos)) {
+      setGallery(variant.photos, alt);
+      return;
+    }
+    setGallery([p.image].filter(Boolean), alt);
+    if (!variant.sku) return;
+    const live = await fetchVariantImages(variant.sku);
+    if (token !== v4GalleryToken || state.activeProduct !== p || !$('productDialog').open) return;
+    setGallery(live.length ? live : [p.image].filter(Boolean), alt);
   }
 
   async function fetchVariantImages(sku) {
@@ -176,25 +211,47 @@
       const response = await fetch(C.apiUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'variantImages', sku }) });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      const images = data.success && Array.isArray(data.images) ? data.images.filter(Boolean).slice(0, 5) : [];
+      const images = data.success && Array.isArray(data.images) ? data.images.filter(url => typeof url === 'string' && url.trim()) : [];
       v4ImageCache.set(sku, images); return images;
     } catch (error) {
-      console.warn('Live images unavailable', error); v4ImageCache.set(sku, []); return [];
+      console.warn('Live images unavailable', error); return [];
     }
   }
 
-  function setGallery(images, alt) {
+  function setGallery(images, alt, selected) {
     const main = $('v4GalleryMain'), thumbs = $('v4GalleryThumbs'); if (!main || !thumbs) return;
-    const list = uniq(images.filter(Boolean));
-    if (!list.length) { main.textContent = '⌚'; thumbs.innerHTML = ''; return; }
-    main.innerHTML = `<img src="${esc(list[0])}" alt="${esc(alt || '')}">`;
+    // A pending legacy fetch or failed thumbnail may change the viewer's image list.
+    window.ImageViewer?.close();
+    const list = uniq(images.filter(url => typeof url === 'string' && url.trim()).map(url => url.trim()));
+    const selectedIndex = Math.max(0, list.indexOf(selected));
+    v4Gallery = { images: list, alt: alt || '', index: selectedIndex };
     thumbs.innerHTML = '';
-    if (list.length <= 1) return;
-    list.forEach((url, index) => {
+    thumbs.hidden = list.length <= 1;
+    thumbs.setAttribute('aria-label', state.language === 'en' ? 'Product photos' : 'Mga larawan ng relo');
+    if (list.length > 1) list.forEach((url, index) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = `v4-gallery-thumb${index === 0 ? ' selected' : ''}`;
-      b.innerHTML = `<img src="${esc(url)}" alt="${esc(`${alt || ''} image ${index + 1}`)}" loading="lazy" decoding="async">`;
-      b.onclick = () => { main.innerHTML = `<img src="${esc(url)}" alt="${esc(alt || '')}">`; [...thumbs.children].forEach(x => x.classList.remove('selected')); b.classList.add('selected'); };
+      b.setAttribute('aria-label', `${alt || ''} — ${state.language === 'en' ? 'Photo' : 'Larawan'} ${index + 1}`);
+      b.setAttribute('aria-pressed', String(index === 0));
+      b.innerHTML = `<img src="${esc(url)}" data-gallery-source="${esc(url)}" alt="" loading="lazy" decoding="async">`;
+      b.onclick = () => selectGalleryImage(index);
       thumbs.appendChild(b);
+    });
+    selectGalleryImage(selectedIndex);
+  }
+
+  function selectGalleryImage(index) {
+    const main = $('v4GalleryMain'), thumbs = $('v4GalleryThumbs');
+    if (!main || !thumbs) return;
+    const url = v4Gallery.images[index];
+    v4Gallery.index = index;
+    main.disabled = !url;
+    main.setAttribute('aria-label', url
+      ? `${state.language === 'en' ? 'Enlarge photo' : 'Palakihin ang larawan'}: ${v4Gallery.alt}`
+      : (state.language === 'en' ? 'No photo available' : 'Walang larawan'));
+    main.innerHTML = url ? `<img src="${esc(url)}" data-gallery-source="${esc(url)}" alt="${esc(v4Gallery.alt)}" decoding="async">` : '<span aria-hidden="true">⌚</span>';
+    [...thumbs.children].forEach((button, position) => {
+      button.classList.toggle('selected', position === index);
+      button.setAttribute('aria-pressed', String(position === index));
     });
   }
 })();

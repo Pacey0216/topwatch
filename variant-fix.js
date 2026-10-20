@@ -20,7 +20,9 @@ function normalVariants(p) {
           size: String(v.size || '').trim(),
           grade,
           price: gradePrice > 0 ? gradePrice : Number(v.price ?? v.sellingPrice ?? p.price ?? 0),
-          stock: Number(v.stock || 0)
+          stock: Number(v.stock || 0),
+          photos: Array.isArray(v.photos) ? v.photos : undefined,
+          photoSource: v.photoSource || ''
         };
       });
   }
@@ -36,7 +38,9 @@ function normalVariants(p) {
     size,
     grade,
     price: Number(gradePriceFromProduct(p, grade) ?? p.price ?? 0),
-    stock: Number(p.stock || 0)
+    stock: Number(p.stock || 0),
+    photos: Array.isArray(p.photos) ? p.photos : undefined,
+    photoSource: p.photoSource || ''
   })));
   return out;
 }
@@ -54,22 +58,19 @@ function openProfile(p, focus = false) {
   if (grades.length === 1 && sizes.length <= 1) state.choice.grade = grades[0];
 
   const sizeUI = sizes.length ? `<div class="variant-section"><div class="variant-label">${esc(t('selectSize'))}</div><div id="sizeTiles" class="size-tiles">${sizes.map(s => `<button type="button" class="size-tile${state.choice.size === s ? ' selected' : ''}" data-size="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>` : '';
-  const gradeUI = grades.length ? `<div class="variant-section"><div class="variant-label">${esc(t('selectGrade'))}</div><div id="gradeTiles" class="grade-tiles">${grades.map(g => gradeTile(g, p, vars)).join('')}</div></div>` : '';
+  const gradeUI = grades.length ? `<div class="variant-section"><div class="variant-label">${esc(t('selectGrade'))}</div><div id="gradeTiles" class="grade-tiles">${grades.map(g => gradeTile(g)).join('')}</div></div>` : '';
   const specs = Object.entries(p.specs || {}).filter(([k]) => !['Available Sizes', 'Japan', 'Swiss', 'Super C'].includes(k)).map(([k, v]) => `<div class="spec-row"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('');
 
-  $('dialogBody').innerHTML = `<div class="product-profile"><div class="profile-image">${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}">` : '⌚'}</div><div class="profile-info"><div class="profile-sku">${esc(p.sku || '')}</div><h2>${esc(p.name || 'Unnamed Watch')}</h2><div id="profilePrice" class="profile-price">${esc(priceLabel(p))}</div><span class="stock-badge available">Available · ${Number(p.stock || 0)} left</span><p class="profile-description">${esc(p.description || '')}</p><div class="variant-picker">${sizeUI}${gradeUI}</div><div class="specs"><div class="spec-row"><span>${esc(t('brand'))}</span><span>${esc(p.category || p.brand || 'Watch')}</span></div>${specs}</div><button id="profileOrderNow" class="primary-action profile-order-button" type="button">${esc(t('orderNow'))}</button><div id="variantWarning" class="variant-warning hidden">${esc(t('choose'))}</div></div></div>`;
+  $('dialogBody').innerHTML = `<div class="product-profile"><div class="profile-image">${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}">` : '⌚'}</div><div class="profile-info"><div class="profile-sku">${esc(p.sku || '')}</div><h2>${esc(p.name || 'Unnamed Watch')}</h2><span class="stock-badge available">Available · ${Number(p.stock || 0)} left</span><p class="profile-description">${esc(p.description || '')}</p><div class="variant-picker">${sizeUI}${gradeUI}</div><div class="specs"><div class="spec-row"><span>${esc(t('brand'))}</span><span>${esc(p.category || p.brand || 'Watch')}</span></div>${specs}</div><button id="profileOrderNow" class="primary-action profile-order-button" type="button">${esc(t('orderNow'))}</button><div id="variantWarning" class="variant-warning hidden">${esc(t('choose'))}</div></div></div>`;
 
   wireVariantButtons(p, vars, sizes, grades);
   if (!$('productDialog').open) $('productDialog').showModal();
   if (focus) setTimeout(() => document.querySelector('.variant-picker')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
 }
 
-function gradeTile(g, p, vars) {
+function gradeTile(g) {
   const m = gradeMeta(g);
-  const gradePrice = Number(gradePriceFromProduct(p, g) || 0);
-  const variantPrices = uniq(vars.filter(v => v.grade === g).map(v => Number(v.price || 0)).filter(Boolean));
-  const price = gradePrice > 0 ? gradePrice : (variantPrices.length ? Math.min(...variantPrices) : Number(p.price || 0));
-  return `<button type="button" class="grade-tile ${m.className}${state.choice.grade === g ? ' selected' : ''}" data-grade="${esc(g)}"><span class="grade-symbol">${m.symbol}</span><span class="grade-copy"><strong>${esc(g === 'Super C' ? 'Super C (1:1)' : g)}</strong><small>${esc(m.label)}</small></span><span class="grade-price">${money(price)}</span></button>`;
+  return `<button type="button" class="grade-tile ${m.className}${state.choice.grade === g ? ' selected' : ''}" data-grade="${esc(g)}"><span class="grade-symbol">${m.symbol}</span><span class="grade-copy"><strong>${esc(g === 'Super C' ? 'Super C (1:1)' : g)}</strong><small>${esc(m.label)}</small></span></button>`;
 }
 
 function wireVariantButtons(p, vars, sizes, grades) {
@@ -115,13 +116,6 @@ function wireVariantButtons(p, vars, sizes, grades) {
     order.disabled = !ready;
     $('variantWarning')?.classList.toggle('hidden', ready);
 
-    let priceOptions = exact;
-    if (!state.choice.grade && state.choice.size) priceOptions = vars.filter(v => v.size === state.choice.size);
-    if (!state.choice.size) priceOptions = vars;
-    const prices = uniq(priceOptions.map(v => Number(v.price || 0)).filter(x => x > 0));
-    if ($('profilePrice')) {
-      $('profilePrice').textContent = prices.length === 1 ? money(prices[0]) : prices.length > 1 ? `${t('from')} ${money(Math.min(...prices))}` : priceLabel(p);
-    }
   }
 
   sizeBtns.forEach(b => b.onclick = () => {
