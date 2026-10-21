@@ -6,15 +6,18 @@
   let v4TopPage = 0;
   let v4GalleryToken = 0;
   let v4Gallery = { images: [], alt: '', index: 0 };
+  const catalogPageSize = 24;
+  let catalogPage = 0;
+  let catalogFilterKey = '';
 
   buildHeaderSearch();
   buildFilterTiles();
+  buildCatalogPagination();
 
   const baseRenderProducts = renderProducts;
-  renderProducts = function(list) {
-    baseRenderProducts(list);
+  renderProducts = function() {
     syncFilterOptions();
-    if (v4Brands.size || v4Grades.size) queueMicrotask(applyV4Filters);
+    applyV4Filters();
   };
 
   renderTop = function() {
@@ -71,7 +74,6 @@
     window.ImageViewer?.close();
   });
 
-  $('catalogSearch')?.addEventListener('input', applyV4Filters);
   applyV4Language();
 
   function buildHeaderSearch() {
@@ -127,8 +129,56 @@
     const out = []; ['Japan', 'Swiss', 'Super C'].forEach(g => { if (String(p.specs?.[g] || '').trim()) out.push(g); }); return out;
   }
 
+  function buildCatalogPagination() {
+    const grid = $('productGrid'); if (!grid || $('catalogPagination')) return;
+    grid.tabIndex = -1;
+    const nav = document.createElement('nav');
+    nav.id = 'catalogPagination'; nav.className = 'catalog-pagination'; nav.hidden = true;
+    nav.innerHTML = '<button id="catalogPrev" type="button" aria-controls="productGrid">&lt;</button><span id="catalogPageStatus" role="status" aria-live="polite" aria-atomic="true"></span><button id="catalogNext" type="button" aria-controls="productGrid">&gt;</button>';
+    grid.after(nav);
+    $('catalogPrev').onclick = () => changeCatalogPage(-1);
+    $('catalogNext').onclick = () => changeCatalogPage(1);
+  }
+
+  function changeCatalogPage(direction) {
+    const lastPage = Math.max(0, Math.ceil(state.filtered.length / catalogPageSize) - 1);
+    const nextPage = Math.max(0, Math.min(lastPage, catalogPage + direction));
+    if (nextPage === catalogPage) return;
+    catalogPage = nextPage;
+    renderCatalogPage();
+    const grid = $('productGrid');
+    grid?.focus({ preventScroll: true });
+    grid?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+
+  function renderCatalogPage() {
+    const lastPage = Math.max(0, Math.ceil(state.filtered.length / catalogPageSize) - 1);
+    catalogPage = Math.min(catalogPage, lastPage);
+    const start = catalogPage * catalogPageSize;
+    baseRenderProducts(state.filtered.slice(start, start + catalogPageSize));
+    updateCatalogPagination();
+  }
+
+  function updateCatalogPagination() {
+    const nav = $('catalogPagination'); if (!nav) return;
+    const count = state.filtered.length;
+    const start = count ? catalogPage * catalogPageSize + 1 : 0;
+    const fil = state.language !== 'en';
+    nav.hidden = count <= catalogPageSize;
+    nav.setAttribute('aria-label', fil ? 'Mga pahina ng katalogo' : 'Catalog pages');
+    $('catalogPrev').disabled = catalogPage === 0;
+    $('catalogNext').disabled = (catalogPage + 1) * catalogPageSize >= count;
+    $('catalogPrev').setAttribute('aria-label', fil ? 'Nakaraang pahina' : 'Previous page');
+    $('catalogNext').setAttribute('aria-label', fil ? 'Susunod na pahina' : 'Next page');
+    text('catalogPageStatus', `${start}–${Math.min(start + catalogPageSize - 1, count)} / ${count}`);
+  }
+
   function applyV4Filters() {
-    const q = ($('catalogSearch')?.value || '').trim().toLowerCase();
+    const searchValue = $('catalogSearch')?.value || '';
+    const q = searchValue.trim().toLowerCase();
+    const filterKey = JSON.stringify([searchValue, [...v4Brands].sort(), [...v4Grades].sort()]);
+    if (filterKey !== catalogFilterKey) catalogPage = 0;
+    catalogFilterKey = filterKey;
     const list = state.products.filter(p => {
       const brand = String(p.category || p.brand || '').toLowerCase();
       const grades = productGrades(p);
@@ -136,8 +186,7 @@
       return (!v4Brands.size || v4Brands.has(brand)) && (!v4Grades.size || grades.some(g => v4Grades.has(g))) && (!q || haystack.includes(q));
     }).sort(sortSales);
     state.filtered = list;
-    baseRenderProducts(list);
-    $('emptyState')?.classList.toggle('hidden', list.length > 0);
+    renderCatalogPage();
   }
 
   function updateTopStatus(count) {
@@ -157,6 +206,7 @@
     if (search) search.placeholder = fil ? 'Hanapin ang relo, brand, o reference' : 'Search watch, brand, or reference';
     text('v4FilterLabel', 'FILTERS'); text('v4BrandLabel', 'Brands'); text('v4GradeLabel', 'Grades');
     text('v4ClearFilters', fil ? 'I-clear' : 'Clear');
+    updateCatalogPagination();
   }
 
   function enhanceGallery(p) {
