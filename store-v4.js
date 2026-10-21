@@ -1,7 +1,5 @@
-// Storefront v4 enhancements: header search, tile filters, rotating featured carousel, live variant galleries.
+// Storefront v4 enhancements: catalog filters, pagination, rotating featured carousel, live variant galleries.
 (() => {
-  const v4Brands = new Set();
-  const v4Grades = new Set();
   const v4ImageCache = new Map();
   let v4TopPage = 0;
   let v4GalleryToken = 0;
@@ -10,8 +8,7 @@
   let catalogPage = 0;
   let catalogFilterKey = '';
 
-  buildHeaderSearch();
-  buildFilterTiles();
+  bindCatalogFilters();
   buildCatalogPagination();
 
   const baseRenderProducts = renderProducts;
@@ -74,54 +71,38 @@
     window.ImageViewer?.close();
   });
 
-  applyV4Language();
+  syncFilterOptions();
+  // Inventory may finish loading before this enhancement script arrives.
+  if (state.lastLoadedAt) applyV4Filters();
 
-  function buildHeaderSearch() {
-    const header = document.querySelector('.simple-header');
-    const input = $('catalogSearch');
-    const controls = header?.querySelector('.header-controls');
-    if (!header || !input || !controls) return;
-    document.querySelector('.hero-search')?.remove();
-    const wrap = document.createElement('label');
-    wrap.className = 'header-search';
-    wrap.setAttribute('aria-label', 'Search watches');
-    wrap.innerHTML = '<span class="header-search-icon">⌕</span>';
-    wrap.appendChild(input);
-    header.insertBefore(wrap, controls);
-    document.querySelector('.sticky-search')?.remove();
-  }
-
-  function buildFilterTiles() {
-    const grid = $('productGrid'); if (!grid || $('v4Filters')) return;
-    const panel = document.createElement('div');
-    panel.id = 'v4Filters'; panel.className = 'v4-filter-panel';
-    panel.innerHTML = '<div class="v4-filter-head"><span id="v4FilterLabel" class="section-label">FILTERS</span><button id="v4ClearFilters" class="v4-clear hidden" type="button">Clear</button></div><div class="v4-filter-groups"><div class="v4-filter-group"><span id="v4BrandLabel" class="v4-filter-label">Brands</span><div id="v4BrandTiles" class="v4-filter-tiles"></div></div><div class="v4-filter-group"><span id="v4GradeLabel" class="v4-filter-label">Grades</span><div id="v4GradeTiles" class="v4-filter-tiles"></div></div></div>';
-    grid.parentNode.insertBefore(panel, grid);
-    $('v4ClearFilters')?.addEventListener('click', () => { v4Brands.clear(); v4Grades.clear(); syncFilterOptions(); applyV4Filters(); });
+  function bindCatalogFilters() {
+    ['catalogBrand', 'catalogGrade'].forEach(id => $(id)?.addEventListener('change', applyV4Filters));
+    $('catalogClearFilters')?.addEventListener('click', () => {
+      ['catalogSearch', 'catalogBrand', 'catalogGrade'].forEach(id => { if ($(id)) $(id).value = ''; });
+      catalogPage = 0;
+      applyV4Filters();
+    });
   }
 
   function syncFilterOptions() {
     const brands = [...new Set(state.products.map(p => String(p.category || p.brand || '').trim()).filter(Boolean))].sort();
     const grades = ['Japan', 'Swiss', 'Super C'].filter(g => state.products.some(p => productGrades(p).includes(g)));
-    const validBrands = new Set(brands.map(x => x.toLowerCase()));
-    const validGrades = new Set(grades);
-    [...v4Brands].forEach(x => { if (!validBrands.has(x)) v4Brands.delete(x); });
-    [...v4Grades].forEach(x => { if (!validGrades.has(x)) v4Grades.delete(x); });
-    renderTiles('v4BrandTiles', brands, v4Brands, x => x.toLowerCase(), x => x);
-    renderTiles('v4GradeTiles', grades, v4Grades, x => x, x => x === 'Super C' ? 'Super C (1:1)' : x);
-    $('v4ClearFilters')?.classList.toggle('hidden', !v4Brands.size && !v4Grades.size);
+    syncSelectOptions('catalogBrand', brands.map(brand => ({ value: brand.toLowerCase(), label: brand })));
+    syncSelectOptions('catalogGrade', grades.map(grade => ({ value: grade, label: grade === 'Super C' ? 'Super C (1:1)' : grade })));
     applyV4Language();
   }
 
-  function renderTiles(id, values, selected, keyFn, labelFn) {
-    const c = $(id); if (!c) return; c.innerHTML = '';
-    values.forEach(value => {
-      const key = keyFn(value); const b = document.createElement('button');
-      b.type = 'button'; b.className = 'v4-filter-tile'; b.textContent = labelFn(value);
-      b.classList.toggle('selected', selected.has(key));
-      b.onclick = () => { selected.has(key) ? selected.delete(key) : selected.add(key); syncFilterOptions(); applyV4Filters(); };
-      c.appendChild(b);
+  function syncSelectOptions(id, choices) {
+    const select = $(id); if (!select) return;
+    const signature = JSON.stringify(choices);
+    if (select.dataset.options === signature) return;
+    const selected = select.value;
+    select.replaceChildren(new Option('', ''));
+    choices.forEach(({ value, label }) => {
+      select.add(new Option(label, value));
     });
+    select.value = choices.some(choice => choice.value === selected) ? selected : '';
+    select.dataset.options = signature;
   }
 
   function productGrades(p) {
@@ -176,14 +157,16 @@
   function applyV4Filters() {
     const searchValue = $('catalogSearch')?.value || '';
     const q = searchValue.trim().toLowerCase();
-    const filterKey = JSON.stringify([searchValue, [...v4Brands].sort(), [...v4Grades].sort()]);
+    const selectedBrand = $('catalogBrand')?.value || '';
+    const selectedGrade = $('catalogGrade')?.value || '';
+    const filterKey = JSON.stringify([searchValue, selectedBrand, selectedGrade]);
     if (filterKey !== catalogFilterKey) catalogPage = 0;
     catalogFilterKey = filterKey;
     const list = state.products.filter(p => {
-      const brand = String(p.category || p.brand || '').toLowerCase();
+      const brand = String(p.category || p.brand || '').trim().toLowerCase();
       const grades = productGrades(p);
       const haystack = [p.sku, p.name, p.category, p.brand, p.grade, p.reference, ...Object.values(p.specs || {})].join(' ').toLowerCase();
-      return (!v4Brands.size || v4Brands.has(brand)) && (!v4Grades.size || grades.some(g => v4Grades.has(g))) && (!q || haystack.includes(q));
+      return (!selectedBrand || selectedBrand === brand) && (!selectedGrade || grades.includes(selectedGrade)) && (!q || haystack.includes(q));
     }).sort(sortSales);
     state.filtered = list;
     renderCatalogPage();
@@ -203,9 +186,18 @@
   function applyV4Language() {
     const fil = state.language !== 'en';
     const search = $('catalogSearch');
-    if (search) search.placeholder = fil ? 'Hanapin ang relo, brand, o reference' : 'Search watch, brand, or reference';
-    text('v4FilterLabel', 'FILTERS'); text('v4BrandLabel', 'Brands'); text('v4GradeLabel', 'Grades');
-    text('v4ClearFilters', fil ? 'I-clear' : 'Clear');
+    if (search) {
+      search.placeholder = fil ? 'Maghanap ng relo…' : 'Find a watch…';
+      search.setAttribute('aria-label', fil ? 'Maghanap ng relo' : 'Find a watch');
+    }
+    $('catalogFilters')?.setAttribute('aria-label', fil ? 'Mga filter ng relo' : 'Watch filters');
+    [['catalogBrand', fil ? 'Lahat ng brand' : 'All brands', fil ? 'Pumili ng brand' : 'Filter by brand'],
+      ['catalogGrade', fil ? 'Lahat ng grade' : 'All grades', fil ? 'Pumili ng grade' : 'Filter by grade']].forEach(([id, label, accessibleName]) => {
+      const select = $(id); if (!select) return;
+      if (select.options[0]) select.options[0].textContent = label;
+      select.setAttribute('aria-label', accessibleName);
+    });
+    text('catalogClearFilters', fil ? 'I-clear ang mga filter' : 'Clear filters');
     updateCatalogPagination();
   }
 
