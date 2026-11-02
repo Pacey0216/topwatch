@@ -11,7 +11,13 @@
   const grade=v=>({japan:'Japan',swiss:'Swiss','super c':'Super C',superc:'Super C'})[fold(v).replace(/\s*\(.*\)/,'')]||text(v);
   const size=v=>text(v).replace(/\s*mm$/i,' mm');
   const visible=p=>['visible','websiteVisibility','Website Visibility','active'].every(k=>enabled(get(p,k)));
-  const specNames=new Set(['Reference','Available Sizes','Movement','Case Material','Dial','Strap','Water Resistance','Case','Material','Color','Gender']);
+  const privateSpec=/price|pricing|cost|profit|margin|wholesale|retail|selling|presyo|^(?:type|replica|uri|url|path|file|file id|image source|source|upload batch id|form item id)$/i;
+  function publicText(value){
+    return text(value).replace(/(?:₱|\bPHP\b)\s*\d[\d,]*(?:\.\d+)?(?:\s*[kK])?|\b\d[\d,]*(?:\.\d+)?\s*(?:PHP|pesos?)\b|\b(?:price|presyo|cost)\s*[:=]?\s*\d[\d,]*(?:\.\d+)?/gi,'').replace(/[ \t]{2,}/g,' ').trim();
+  }
+  function publicSpecs(specs){
+    return Object.fromEntries(Object.entries(specs||{}).filter(([key,value])=>!privateSpec.test(key)&&['string','number'].includes(typeof value)&&!/(?:https?:\/\/|file:\/\/|[A-Z]:\\)/i.test(String(value))).map(([key,value])=>[key,publicText(value)]).filter(([,value])=>value));
+  }
   function records(table){
     if(!table)return [];
     const rows=Array.isArray(table)?table:table.values||table.rows||[];
@@ -58,11 +64,11 @@
       const candidates=nested.length?nested:flat.filter(v=>owner(v,source)===p);
       const variants=candidates.map(v=>cleanVariant(v,p)).filter(Boolean);
       if(!variants.length)continue;
-      const specs=Object.fromEntries(Object.entries(p.specs||{}).filter(([k,v])=>specNames.has(k)&&['string','number'].includes(typeof v)));
+      const specs=publicSpecs(p.specs);
       if(f.reference)specs.Reference=f.reference;
       const sizes=text(get(p,'Available Sizes','size'));if(sizes)specs['Available Sizes']=sizes;
       const sku=text(get(p,'sku','productId','Product ID'))||f.reference||'product:'+fold(f.brand)+':'+fold(f.name);
-      products.push({sku,productId:f.id,name:f.name,brand:f.brand||'Watch',category:f.brand||'Watch',reference:f.reference,visible:true,stock:variants.reduce((n,v)=>n+v.stock,0),sold:num(get(p,'sold','Recorded Sales')),featured:['true','yes','1'].includes(fold(get(p,'featured','Featured'))),image:url(get(p,'image','Main Image Url'))||variants.flatMap(v=>v.photos).find(Boolean)||'',specs,variants});
+      products.push({sku,productId:f.id,name:f.name,brand:f.brand||'Watch',category:f.brand||'Watch',reference:f.reference,description:publicText(get(p,'description','Description')),visible:true,stock:variants.reduce((n,v)=>n+v.stock,0),sold:num(get(p,'sold','Recorded Sales')),featured:['true','yes','1'].includes(fold(get(p,'featured','Featured'))),image:url(get(p,'image','Main Image Url'))||variants.flatMap(v=>v.photos).find(Boolean)||'',specs,variants});
     }
     // Reused product identifiers or SKUs are ambiguous, so exclude both records.
     const productCount=new Map(),skuOwners=new Map();

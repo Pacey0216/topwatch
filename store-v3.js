@@ -68,8 +68,9 @@ function requiresChoice(p){const v=normalVariants(p);return uniq(v.map(x=>x.size
 function card(p){
  const a=document.createElement('article');a.className='product-card';a.dataset.sku=p.sku;
  const image=p.image?'<img src="'+esc(p.image)+'" alt="'+esc(p.name)+'" loading="lazy">':'<span aria-hidden="true">⌚</span>';
- a.innerHTML='<button type="button" class="product-photo listing-image" aria-label="'+esc(t('details')+': '+p.name)+'">'+image+'</button><div class="product-body"><h3 class="product-name">'+esc(p.name||'Unnamed Watch')+'</h3><div class="card-actions"><button class="details-button" type="button">'+esc(t('details'))+'</button></div></div>';
- a.querySelectorAll('.listing-image,.details-button').forEach(button=>button.onclick=event=>{event.stopPropagation();openProfile(p)});return a;
+  a.innerHTML='<button type="button" class="product-photo listing-image" aria-label="'+esc(t('details')+': '+p.name)+'">'+image+'</button><div class="product-body"><h3 class="product-name">'+esc(p.name||'Unnamed Watch')+'</h3><div class="card-actions"><button class="details-button" type="button">'+esc(t('details'))+'</button><button class="inquire-button order-now" type="button">'+(state.language==='en'?'Inquire':'Magtanong')+'</button></div></div>';
+ a.querySelectorAll('.listing-image,.details-button').forEach(button=>button.onclick=event=>{event.stopPropagation();openProfile(p)});
+ a.querySelector('.inquire-button').onclick=event=>{event.stopPropagation();quickOrder(p);};return a;
 }
 function refreshActiveProduct(){
  if(!$('productDialog')?.open||!state.activeProduct)return;
@@ -77,7 +78,13 @@ function refreshActiveProduct(){
  if(current){openProfile(current);return}
  window.ImageViewer?.close();$('productDialog').close();state.activeProduct=null;
 }
-function quickOrder(p){openProfile(p,true)}
+function quickOrder(p){
+ const vars=normalVariants(p),same=state.activeProduct?.sku===p.sku;
+ const selected=same?vars.filter(v=>v.size===state.choice.size&&v.grade===state.choice.grade):[];
+ if(selected.length===1){sendOrder(p,selected[0]);return}
+ if(vars.length===1){sendOrder(p,vars[0]);return}
+ openProfile(p,true);
+}
 function openProfile(p,focus=false){
  state.activeProduct=p;state.choice={size:'',grade:''};const vars=normalVariants(p),sizes=uniq(vars.map(v=>v.size).filter(Boolean)),grades=uniq(vars.map(v=>v.grade).filter(Boolean));if(sizes.length===1)state.choice.size=sizes[0];if(grades.length===1)state.choice.grade=grades[0];
  const sizeUI=sizes.length?`<div class="variant-section"><div class="variant-label">${esc(t('selectSize'))}</div><div id="sizeTiles" class="size-tiles">${sizes.map(s=>`<button type="button" class="size-tile${state.choice.size===s?' selected':''}" data-size="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`:'';
@@ -93,7 +100,7 @@ function wireVariantButtons(p,vars,sizes,grades){
  sizeBtns.forEach(b=>b.onclick=()=>{state.choice.size=b.dataset.size;refresh()});gradeBtns.forEach(b=>b.onclick=()=>{state.choice.grade=b.dataset.grade;refresh()});refresh();order.onclick=()=>{const exact=compatible();if(order.disabled||!exact.length)return;sendOrder(p,exact.sort((a,b)=>a.price-b.price)[0])};
 }
 function sendOrder(p,v){const msg=orderMessage(p,v);try{navigator.clipboard?.writeText(msg)}catch(e){}window.open(messenger(msg),'_blank','noopener')}
-function orderMessage(p,v){const s=p.specs||{};return [state.language==='en'?'Hi! What is the price, and is this still available?':'Hi! Magkano po ito at available pa?',p.name||'',v.sku||p.sku||'',v.grade==='Super C'?'Super C (1:1)':v.grade||'',v.size||'',p.reference||s.Reference||''].filter(Boolean).join(' | ')}
+function orderMessage(p,v){const s=p.specs||{};return [state.language==='en'?'Hi! How much is this watch, and is it still available?':'Hi! Magkano po ang relong ito, at available pa po ba?',p.name||'',v.sku||p.sku||'',v.grade==='Super C'?'Super C (1:1)':v.grade||'',v.size||'',p.reference||s.Reference||''].filter(Boolean).join(' | ')}
 function messenger(msg){const b=C.messengerUrl||C.facebookUrl||'#',sep=b.includes('?')?'&':'?';return b==='#'?b:`${b}${sep}text=${encodeURIComponent(msg)}`}
 
 function setupContacts(){if($('contactPhone')){$('contactPhone').href=C.phoneUrl||'#';text('contactPhoneText',C.phoneDisplay||'')}if($('contactEmail')){$('contactEmail').href=C.email?`mailto:${C.email}`:'#';text('contactEmailText',C.email||'')}if($('contactWhatsapp')){$('contactWhatsapp').href=C.whatsappUrl||'#';text('contactWhatsappText',C.whatsappDisplay||'')}if($('contactFacebook'))$('contactFacebook').href=C.messengerUrl||C.facebookUrl||'#';$('requestWatchLink')?.addEventListener('click',e=>{e.preventDefault();window.open(messenger(state.language==='fil'?'Hinahanap ko: ':'Looking for: '),'_blank','noopener')});$('contactToggle')?.addEventListener('click',e=>{e.stopPropagation();$('contactPanel')?.classList.toggle('hidden')});$('contactPanel')?.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',()=>$('contactPanel')?.classList.add('hidden'))}

@@ -18,11 +18,9 @@ function openProfile(p, focus = false) {
   if (!state.choice.grade && grades.length === 1 && sizes.length <= 1) state.choice.grade = grades[0];
   const sizeUI = sizes.length ? '<div class="variant-section"><div class="variant-label">'+esc(t('selectSize'))+'</div><div id="sizeTiles" class="size-tiles">'+sizes.map(s => '<button type="button" class="size-tile" data-size="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div></div>' : '';
   const gradeUI = grades.length ? '<div class="variant-section"><div class="variant-label">'+esc(t('selectGrade'))+'</div><div id="gradeTiles" class="grade-tiles">'+grades.map(g => gradeTile(g)).join('')+'</div></div>' : '';
-  const publicSpecs = new Set(['Reference','Movement','Case Material','Dial','Strap','Water Resistance','Case','Material','Color','Gender']);
-  const specs = Object.entries(p.specs || {}).filter(([k,v]) => publicSpecs.has(k) && v).map(([k,v]) => '<div class="spec-row"><span>'+esc(k)+'</span><span>'+esc(v)+'</span></div>').join('');
+  const specs = Object.entries(p.specs || {}).filter(([k,v]) => !['Available Sizes','Japan','Swiss','Super C'].includes(k) && v).map(([k,v]) => '<div class="spec-row"><span>'+esc(k)+'</span><span>'+esc(v)+'</span></div>').join('');
   const fil = state.language !== 'en';
-  const disclaimer = fil ? 'Replica ang mga relong ito at walang kaugnayan sa mga orihinal na brand.' : 'These watches are replicas and are not affiliated with the original brands.';
-  $('dialogBody').innerHTML = '<div class="product-profile"><div class="profile-image"></div><div class="profile-info"><h2>'+esc(p.name || 'Unnamed Watch')+'</h2><div id="selectedVariantSku" class="profile-sku"></div><span id="selectedVariantStock" class="stock-badge available"></span><div class="variant-picker">'+sizeUI+gradeUI+'</div><div class="specs"><div class="spec-row"><span>'+esc(t('brand'))+'</span><span>'+esc(p.category || p.brand || 'Watch')+'</span></div>'+specs+'</div><button id="profileOrderNow" class="primary-action profile-order-button" type="button">'+(fil ? 'Magtanong sa Messenger' : 'Ask on Messenger')+'</button><div id="variantWarning" class="variant-warning hidden">'+esc(t('choose'))+'</div></div></div><p class="popup-disclaimer">'+disclaimer+'</p>';
+  $('dialogBody').innerHTML = '<div class="product-profile"><div class="profile-image"></div><div class="profile-info"><h2>'+esc(p.name || 'Unnamed Watch')+'</h2><div id="selectedVariantSku" class="profile-sku"></div><span id="selectedVariantStock" class="stock-badge available"></span>'+(p.description?'<p class="profile-description">'+esc(p.description)+'</p>':'')+'<div class="variant-picker">'+sizeUI+gradeUI+'</div><div class="specs"><div class="spec-row"><span>'+esc(t('brand'))+'</span><span>'+esc(p.category || p.brand || 'Watch')+'</span></div>'+specs+'</div><button id="profileOrderNow" class="primary-action profile-order-button" type="button">'+(fil ? 'Magtanong sa Messenger' : 'Ask on Messenger')+'</button><div id="variantWarning" class="variant-warning hidden">'+esc(t('choose'))+'</div></div></div>';
   wireVariantButtons(p,vars,sizes,grades);
   if (!$('productDialog').open) $('productDialog').showModal();
   if (focus) setTimeout(() => document.querySelector('.variant-picker')?.scrollIntoView({block:'center',behavior:'smooth'}),80);
@@ -47,7 +45,7 @@ function wireVariantButtons(p,vars,sizes,grades) {
     order.disabled = !ready;
     $('variantWarning')?.classList.toggle('hidden',ready);
     text('selectedVariantSku',ready ? exact[0].sku : '');
-    text('selectedVariantStock',ready ? (state.language === 'en' ? exact[0].stock+' available' : 'May '+exact[0].stock+' piraso') : t('choose'));
+    text('selectedVariantStock',state.language === 'en' ? p.stock+' available' : 'May '+p.stock+' piraso');
     window.TopWatchComparison?.refresh();
   }
   sizeBtns.forEach(b => b.onclick = () => {state.choice.size = b.dataset.size;refresh();});

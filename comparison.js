@@ -8,13 +8,13 @@
     compare:'Compare', add:'Add to comparison', close:'Close comparison', remove:'Remove', model:'Model', grade:'Grade', size:'Size',
     available:n=>`${n} available`, ask:'Ask on Messenger', duplicate:'This SKU is already selected. Choose another variant.',
     limit:'Two watches are selected. Remove one before adding another.', missing:'A selected watch is no longer available.',
-    inquiry:'Hi! What is the price, and is this still available?', change:'Choose a model', empty:'No photo available'
+    inquiry:'Hi! How much is this watch, and is it still available?', change:'Choose a model', empty:'No photo available'
   } : {
     title:'Ikumpara ang mga Relo', help:'Buksan ang relo at piliin ang grade at sukat. Pumili ng hanggang dalawang magkaibang SKU.',
     compare:'Ikumpara', add:'Idagdag sa pagkumpara', close:'Isara ang paghahambing', remove:'Alisin', model:'Modelo', grade:'Grade', size:'Sukat',
     available:n=>`May ${n} piraso`, ask:'Magtanong sa Messenger', duplicate:'Napili na ang SKU na ito. Pumili ng ibang variant.',
     limit:'Dalawa na ang napili. Alisin muna ang isa bago magdagdag.', missing:'Hindi na available ang isang napiling relo.',
-    inquiry:'Hi! Magkano po ito at available pa?', change:'Pumili ng modelo', empty:'Walang larawan'
+    inquiry:'Hi! Magkano po ang relong ito, at available pa po ba?', change:'Pumili ng modelo', empty:'Walang larawan'
   };
   const sku = variant => String(variant?.sku || variant?.variantSku || '').trim().toLowerCase();
   const variants = product => normalVariants(product).filter(v => sku(v) && Number(v.stock) > 0);
