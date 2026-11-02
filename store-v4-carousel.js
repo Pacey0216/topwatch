@@ -1,12 +1,13 @@
-// Featured showcase: match the responsive catalog columns and stop at the final page.
+// Best-seller showcase: match the responsive catalog columns and stop at the final page.
 (() => {
   let page = 0;
-  const perPage = () => window.matchMedia('(max-width:620px)').matches ? 1 : window.matchMedia('(max-width:900px)').matches ? 2 : 4;
+  const perPage = () => 4;
   const lastPage = count => Math.max(0, Math.ceil(count / perPage()) - 1);
 
   renderTop = function() {
     const c = $('topSellers'); if (!c) return;
-    const featured = state.products.filter(p => p.featured === true).sort(sortSales).slice(0, 6);
+    const featured = state.products.filter(p => Number(p.sold) > 0).sort(sortSales).slice(0, 6);
+    text('topSellingDescription',featured.length?t('topDescription'):(state.language==='en'?'No recorded sales yet for available watches.':'Wala pang naitalang benta para sa mga available na relo.'));
     const maxPage = lastPage(featured.length);
     page = Math.min(page, maxPage);
     c.innerHTML = '';

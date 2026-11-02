@@ -7,10 +7,10 @@ const state={products:[],filtered:[],selectedBrands:new Set(),language:saved==='
 
 const COPY={
  fil:{search:'Hanapin',fast:'MABILISANG PILI',topTitle:'Pinakamabentang Relo',topDescription:'Top 6 na relo batay sa naitalang benta.',catalog:'CATALOG',available:'Mga Available na Relo',catalogPlaceholder:'I-type ang brand, model, style, o reference',allBrands:'Lahat ng Brand',brandsSelected:n=>`${n} brand ang napili`,empty:'Walang nakitang relo. Subukan ang ibang brand o search term.',special:'ESPESYAL NA REQUEST',requestTitle:'Hindi mo makita ang gusto mong relo?',requestDescription:'Sabihin sa amin ang gusto mong relo at tutulungan ka naming hanapin ito.',requestButton:'Mag-request ng Relo',details:'Detalye',orderNow:'Umorder Ngayon',choose:'Pumili muna ng variant',size:'Sukat',grade:'Grade',brand:'Brand',reference:'Reference',price:'Presyo',product:'Produkto',loaded:n=>`${n} available na relo · live inventory`,unavailable:'Hindi ma-load ang live inventory',newArrival:'Bagong dating',sales:n=>`${n} naitalang benta`,contact:'Contact info',messageUs:'I-message Kami',from:'Mula',entry:'Entry tier',mid:'Mid tier',top:'Top tier',selectSize:'Piliin ang sukat',selectGrade:'Piliin ang grade'},
- en:{search:'Search',fast:'FAST PICKS',topTitle:'Top-Selling Watches',topDescription:'Top 6 watches based on recorded sales.',catalog:'LIVE CATALOG',available:'Available Watches',catalogPlaceholder:'Type brand, model, style, or reference',allBrands:'All brands',brandsSelected:n=>`${n} brands selected`,empty:'No watch found. Try another brand or search term.',special:'SPECIAL REQUEST',requestTitle:"Don't see the watch you like?",requestDescription:'Tell us your desired watch and we’ll help you look for it.',requestButton:'Request a Watch',details:'Details',orderNow:'Order Now',choose:'Select a variant first',size:'Size',grade:'Grade',brand:'Brand',reference:'Reference',price:'Price',product:'Product',loaded:n=>`${n} available watch${n===1?'':'es'} · live inventory`,unavailable:'Live inventory unavailable',newArrival:'New arrival',sales:n=>`${n} recorded sale${n===1?'':'s'}`,contact:'Contact info',messageUs:'Message Us',from:'From',entry:'Entry tier',mid:'Mid tier',top:'Top tier',selectSize:'Select size',selectGrade:'Select grade'}
+ en:{search:'Search',fast:'FAST PICKS',topTitle:'Best Selling Watches',topDescription:'Top 6 watches based on recorded sales.',catalog:'LIVE CATALOG',available:'Available Watches',catalogPlaceholder:'Type brand, model, style, or reference',allBrands:'All brands',brandsSelected:n=>`${n} brands selected`,empty:'No watch found. Try another brand or search term.',special:'SPECIAL REQUEST',requestTitle:"Don't see the watch you like?",requestDescription:'Tell us your desired watch and we’ll help you look for it.',requestButton:'Request a Watch',details:'Details',orderNow:'Order Now',choose:'Select a variant first',size:'Size',grade:'Grade',brand:'Brand',reference:'Reference',price:'Price',product:'Product',loaded:n=>`${n} available watch${n===1?'':'es'} · live inventory`,unavailable:'Live inventory unavailable',newArrival:'New arrival',sales:n=>`${n} recorded sale${n===1?'':'s'}`,contact:'Contact info',messageUs:'Message Us',from:'From',entry:'Entry tier',mid:'Mid tier',top:'Top tier',selectSize:'Select size',selectGrade:'Select grade'}
 };
 const BRAND={
- top:{fil:{heroTitle:'Relo para sa modernong lalaki.',heroDescription:'Hanapin ayon sa model, brand, o reference. Tingnan ang detalye at umorder direkta sa amin.',heroPlaceholder:'Hanapin ang relo, brand, o reference',footer:'Quality watches. Tapat na presyo. Simpleng order.'},en:{heroTitle:'Built for the modern man.',heroDescription:'Search by model, brand, or reference. Review the details and order directly.',heroPlaceholder:'Search watch, brand, or reference',footer:'Quality watches. Honest pricing. Simple ordering.'}},
+ top:{fil:{heroTitle:'Relo ng modernong lalaki.',heroDescription:'Hanapin ayon sa model, brand, o reference. Tingnan ang detalye at umorder direkta sa amin.',heroPlaceholder:'Hanapin ang relo, brand, o reference',footer:'Quality watches. Tapat na presyo. Simpleng order.'},en:{heroTitle:'Built for the modern man.',heroDescription:'Search by model, brand, or reference. Review the details and order directly.',heroPlaceholder:'Search watch, brand, or reference',footer:'Quality watches. Honest pricing. Simple ordering.'}},
  master:{fil:{heroTitle:'Sulit na relo. Simpleng pag-order.',heroDescription:'Hanapin ang eksaktong relo, tingnan ang live availability, at umorder direkta.',heroPlaceholder:'Hanapin ang relo, brand, o reference',footer:'Sulit na relo. Live inventory. Simpleng order.'},en:{heroTitle:'Good finds. Simple ordering.',heroDescription:'Search the exact watch you want, check live availability, then order directly.',heroPlaceholder:'Search watch, brand, or reference',footer:'Good-value watches. Live inventory. Simple ordering.'}}
 };
 const t=k=>COPY[state.language][k], bt=k=>BRAND[isTop?'top':'master'][state.language][k];
@@ -32,7 +32,7 @@ function setupEvents(){
  $('filButton')?.addEventListener('click',()=>setLanguage('fil'));$('engButton')?.addEventListener('click',()=>setLanguage('en'));
  document.addEventListener('click',()=>$('brandFilterMenu')?.classList.add('hidden'));
 }
-function setLanguage(l){state.language=l==='en'?'en':'fil';try{localStorage.setItem(languageKey,state.language)}catch(e){}applyLanguage();updateBrandFilterButton();renderTop();renderProducts(state.filtered);if(state.activeProduct&&$('productDialog')?.open)openProfile(state.activeProduct)}
+function setLanguage(l){state.language=l==='en'?'en':'fil';try{localStorage.setItem(languageKey,state.language)}catch(e){}applyLanguage();updateBrandFilterButton();renderTop();renderProducts(state.filtered);if(state.activeProduct&&$('productDialog')?.open)openProfile(state.activeProduct);window.dispatchEvent(new Event('topwatch:language'))}
 function applyLanguage(){
  document.documentElement.lang=state.language==='fil'?'fil':'en';$('filButton')?.classList.toggle('active',state.language==='fil');$('engButton')?.classList.toggle('active',state.language==='en');
  text('heroTitle',bt('heroTitle'));text('heroDescription',bt('heroDescription'));placeholder('heroSearch',bt('heroPlaceholder'));text('heroSearchButton',t('search'));
@@ -42,8 +42,8 @@ function applyLanguage(){
 async function loadProducts({silent=false}={}){
  try{
   const sep=C.apiUrl.includes('?')?'&':'?';const r=await fetch(`${C.apiUrl}${sep}store=${encodeURIComponent(C.storeFilter||'all')}&_=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}`);
-  const d=await r.json();if(!d.success||!Array.isArray(d.products))throw new Error(d.error||'Bad inventory');
-  state.products=d.products.filter(p=>Number(p.stock||0)>0&&p.visible!==false).sort(sortSales);state.lastLoadedAt=Date.now();fillBrands();renderTop();runSearch();updateStatus();applyLuxuryBackground();
+  const d=await r.json();if(d.success!==true||!(Array.isArray(d.products)||d.products?.headers||d.products?.values||d.Products))throw new Error(d.error||'Bad inventory');
+  state.products=window.InventoryModel.normalizeInventory(d).sort(sortSales);state.lastLoadedAt=Date.now();fillBrands();renderTop();runSearch();updateStatus();applyLuxuryBackground();refreshActiveProduct();window.dispatchEvent(new Event('topwatch:inventory'));
  }catch(e){console.error(e);if(!silent){state.products=[];state.filtered=[];renderTop();renderProducts([]);updateStatus(true)}}
 }
 const sortSales=(a,b)=>Number(b.sold||0)-Number(a.sold||0)||String(a.name||'').localeCompare(String(b.name||''));
@@ -57,7 +57,7 @@ function renderProducts(list){const g=$('productGrid');if(!g)return;g.innerHTML=
 
 function parseSizes(p){return uniq(String(p.specs?.['Available Sizes']||p.size||'').split(/[,/|]+/).map(x=>x.trim()).filter(Boolean))}
 function parseGrades(p){if(Array.isArray(p.variants)&&p.variants.length)return uniq(p.variants.filter(v=>Number(v.stock||0)>0&&v.active!==false).map(v=>cleanGrade(v.grade)).filter(Boolean));const out=[];['Japan','Swiss','Super C'].forEach(g=>{if(String(p.specs?.[g]||'').trim())out.push(g)});return uniq(out)}
-function normalVariants(p){if(Array.isArray(p.variants)&&p.variants.length)return p.variants.filter(v=>Number(v.stock||0)>0&&v.active!==false).map(v=>({sku:v.sku||v.variantSku||'',size:String(v.size||'').trim(),grade:cleanGrade(v.grade),price:Number(v.price??v.sellingPrice??p.price??0),stock:Number(v.stock||0),photos:Array.isArray(v.photos)?v.photos:undefined,photoSource:v.photoSource||''}));const sizes=parseSizes(p),grades=parseGrades(p),ss=sizes.length?sizes:[''],gg=grades.length?grades:[''],out=[];ss.forEach(size=>gg.forEach(grade=>out.push({sku:'',size,grade,price:Number(gradePriceFromProduct(p,grade)??p.price??0),stock:Number(p.stock||0),photos:Array.isArray(p.photos)?p.photos:undefined,photoSource:p.photoSource||''})));return out}
+function normalVariants(p){return window.InventoryModel.availableVariants(p)}
 function gradePriceFromProduct(p,grade){const k=cleanGrade(grade),gp=p.gradePrices||{};return gp[k]??gp[k.toLowerCase()]??p[`${k.replace(/\s+/g,'')}Price`]??null}
 function cleanGrade(g){const x=String(g||'').replace(/\s*\([^)]*\)\s*/g,'').trim();return /^super\s*c/i.test(x)?'Super C':/^swiss/i.test(x)?'Swiss':/^japan/i.test(x)?'Japan':x}
 function uniq(a){return [...new Set(a)]}
@@ -66,11 +66,18 @@ function productPrice(p){const prices=normalVariants(p).map(v=>v.price).filter(x
 function requiresChoice(p){const v=normalVariants(p);return uniq(v.map(x=>x.size).filter(Boolean)).length>1||uniq(v.map(x=>x.grade).filter(Boolean)).length>1}
 
 function card(p){
- const a=document.createElement('article');a.className='product-card';const image=p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:'⌚';const sales=Number(p.sold||0)>0?t('sales')(Number(p.sold||0)):t('newArrival');
- a.innerHTML=`<div class="product-photo">${image}</div><div class="product-body"><h3 class="product-name">${esc(p.name||'Unnamed Watch')}</h3><span class="stock-badge available">Available · ${Number(p.stock||0)} left</span><div class="sold-count">${esc(sales)}</div>${requiresChoice(p)?`<div class="variant-hint">${esc(t('choose'))}</div>`:''}<div class="card-actions"><button class="details-button" type="button">${esc(t('details'))}</button><button class="order-now" type="button">${esc(t('orderNow'))}</button></div></div>`;
- a.querySelector('.details-button').onclick=()=>openProfile(p);a.querySelector('.order-now').onclick=()=>requiresChoice(p)?openProfile(p,true):quickOrder(p);return a;
+ const a=document.createElement('article');a.className='product-card';a.dataset.sku=p.sku;
+ const image=p.image?'<img src="'+esc(p.image)+'" alt="'+esc(p.name)+'" loading="lazy">':'<span aria-hidden="true">⌚</span>';
+ a.innerHTML='<button type="button" class="product-photo listing-image" aria-label="'+esc(t('details')+': '+p.name)+'">'+image+'</button><div class="product-body"><h3 class="product-name">'+esc(p.name||'Unnamed Watch')+'</h3><div class="card-actions"><button class="details-button" type="button">'+esc(t('details'))+'</button></div></div>';
+ a.querySelectorAll('.listing-image,.details-button').forEach(button=>button.onclick=event=>{event.stopPropagation();openProfile(p)});return a;
 }
-function quickOrder(p){const v=normalVariants(p)[0]||{size:'',grade:'',price:productPrice(p),sku:''};sendOrder(p,v)}
+function refreshActiveProduct(){
+ if(!$('productDialog')?.open||!state.activeProduct)return;
+ const current=state.products.find(p=>p.sku===state.activeProduct.sku);
+ if(current){openProfile(current);return}
+ window.ImageViewer?.close();$('productDialog').close();state.activeProduct=null;
+}
+function quickOrder(p){openProfile(p,true)}
 function openProfile(p,focus=false){
  state.activeProduct=p;state.choice={size:'',grade:''};const vars=normalVariants(p),sizes=uniq(vars.map(v=>v.size).filter(Boolean)),grades=uniq(vars.map(v=>v.grade).filter(Boolean));if(sizes.length===1)state.choice.size=sizes[0];if(grades.length===1)state.choice.grade=grades[0];
  const sizeUI=sizes.length?`<div class="variant-section"><div class="variant-label">${esc(t('selectSize'))}</div><div id="sizeTiles" class="size-tiles">${sizes.map(s=>`<button type="button" class="size-tile${state.choice.size===s?' selected':''}" data-size="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`:'';
@@ -86,10 +93,11 @@ function wireVariantButtons(p,vars,sizes,grades){
  sizeBtns.forEach(b=>b.onclick=()=>{state.choice.size=b.dataset.size;refresh()});gradeBtns.forEach(b=>b.onclick=()=>{state.choice.grade=b.dataset.grade;refresh()});refresh();order.onclick=()=>{const exact=compatible();if(order.disabled||!exact.length)return;sendOrder(p,exact.sort((a,b)=>a.price-b.price)[0])};
 }
 function sendOrder(p,v){const msg=orderMessage(p,v);try{navigator.clipboard?.writeText(msg)}catch(e){}window.open(messenger(msg),'_blank','noopener')}
-function orderMessage(p,v){const s=p.specs||{};return [t('orderNow'),`${t('product')}: ${p.name||''}`,`${t('brand')}: ${p.category||p.brand||''}`,`${t('reference')}: ${p.reference||s.Reference||''}`,v.size?`${t('size')}: ${v.size}`:'',v.grade?`${t('grade')}: ${v.grade==='Super C'?'Super C (1:1)':v.grade}`:'',`${t('price')}: ${money(v.price||productPrice(p))}`,v.sku?`SKU: ${v.sku}`:`SKU: ${p.sku||''}`].filter(Boolean).join('\n')}
+function orderMessage(p,v){const s=p.specs||{};return [state.language==='en'?'Hi! What is the price, and is this still available?':'Hi! Magkano po ito at available pa?',p.name||'',v.sku||p.sku||'',v.grade==='Super C'?'Super C (1:1)':v.grade||'',v.size||'',p.reference||s.Reference||''].filter(Boolean).join(' | ')}
 function messenger(msg){const b=C.messengerUrl||C.facebookUrl||'#',sep=b.includes('?')?'&':'?';return b==='#'?b:`${b}${sep}text=${encodeURIComponent(msg)}`}
 
 function setupContacts(){if($('contactPhone')){$('contactPhone').href=C.phoneUrl||'#';text('contactPhoneText',C.phoneDisplay||'')}if($('contactEmail')){$('contactEmail').href=C.email?`mailto:${C.email}`:'#';text('contactEmailText',C.email||'')}if($('contactWhatsapp')){$('contactWhatsapp').href=C.whatsappUrl||'#';text('contactWhatsappText',C.whatsappDisplay||'')}if($('contactFacebook'))$('contactFacebook').href=C.messengerUrl||C.facebookUrl||'#';$('requestWatchLink')?.addEventListener('click',e=>{e.preventDefault();window.open(messenger(state.language==='fil'?'Hinahanap ko: ':'Looking for: '),'_blank','noopener')});$('contactToggle')?.addEventListener('click',e=>{e.stopPropagation();$('contactPanel')?.classList.toggle('hidden')});$('contactPanel')?.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',()=>$('contactPanel')?.classList.add('hidden'))}
 function applyLuxuryBackground(){const sec=document.querySelector('.quick-order'),img=state.products.find(p=>p.image)?.image;if(sec&&img)sec.style.setProperty('--luxury-watch-bg',`url("${String(img).replace(/"/g,'\\"')}")`)}
 const money=v=>new Intl.NumberFormat(C.locale||'en-PH',{style:'currency',currency:C.currency||'PHP',maximumFractionDigits:0}).format(Number(v||0));
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+

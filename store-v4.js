@@ -1,9 +1,10 @@
-// Storefront v4 enhancements: catalog filters, pagination, rotating featured carousel, live variant galleries.
+// Storefront v4 enhancements: catalog filters, pagination, recorded-sales carousel, live variant galleries.
 (() => {
   const v4ImageCache = new Map();
   let v4TopPage = 0;
   let v4GalleryToken = 0;
   let v4Gallery = { images: [], alt: '', index: 0 };
+  let v4Return = null;
   const catalogPageSize = 24;
   let catalogPage = 0;
   let catalogFilterKey = '';
@@ -19,7 +20,7 @@
 
   renderTop = function() {
     const c = $('topSellers'); if (!c) return;
-    const featured = state.products.filter(p => p.featured === true).sort(sortSales).slice(0, 6);
+    const featured = state.products.filter(p => Number(p.sold) > 0).sort(sortSales).slice(0, 6);
     c.innerHTML = '';
     featured.forEach(p => c.appendChild(card(p)));
     v4TopPage = 0;
@@ -60,15 +61,17 @@
 
   const baseOpenProfile = openProfile;
   openProfile = function(p, focus = false) {
-    window.ImageViewer?.close();
-    ++v4GalleryToken;
-    baseOpenProfile(p, focus);
-    enhanceGallery(p);
+    const dialog=$('productDialog'),same=dialog.open&&state.activeProduct?.sku===p.sku;
+    const selected=same?v4Gallery.images[v4Gallery.index]:null;
+    if(!dialog.open){v4Return={x:scrollX,y:scrollY,focus:document.activeElement,overflow:document.documentElement.style.overflow};document.documentElement.style.overflow='hidden';}
+    window.ImageViewer?.close();++v4GalleryToken;
+    baseOpenProfile(p, focus);enhanceGallery(p);
+    if(selected&&v4Gallery.images.includes(selected))selectGalleryImage(v4Gallery.images.indexOf(selected));
   };
   $('productDialog')?.addEventListener('close', () => {
     if ($('productDialog').open) return;
-    ++v4GalleryToken;
-    window.ImageViewer?.close();
+    ++v4GalleryToken;window.ImageViewer?.close();v4Gallery={images:[],alt:'',index:0};
+    if(v4Return){const saved=v4Return;v4Return=null;document.documentElement.style.overflow=saved.overflow;if(saved.focus?.isConnected)saved.focus.focus({preventScroll:true});window.scrollTo({left:saved.x,top:saved.y,behavior:'instant'});}
   });
 
   syncFilterOptions();
@@ -206,7 +209,8 @@
     if (!photo || photo.classList.contains('v4-gallery')) return;
     photo.classList.add('v4-gallery');
     photo.innerHTML = '<button id="v4GalleryMain" class="v4-gallery-main" type="button" aria-haspopup="dialog"></button><div id="v4GalleryThumbs" class="v4-gallery-thumbs" role="group"></div>';
-    $('v4GalleryMain').onclick = () => {
+    $('v4GalleryMain').onclick = event => {
+      event.stopPropagation();if(!$('productDialog').open)return;
       if (!v4Gallery.images.length) return;
       window.ImageViewer?.open({
         images: v4Gallery.images.map(url => ({ url, alt: v4Gallery.alt })),
@@ -222,7 +226,7 @@
       const selected = v4Gallery.images[v4Gallery.index];
       setGallery(v4Gallery.images.filter(image => image !== url), v4Gallery.alt, selected);
     });
-    setGallery([p.image].filter(Boolean), p.name);
+    setGallery([], p.name);
   }
 
   async function updateGalleryForChoice(p, vars) {
@@ -231,7 +235,7 @@
     enhanceGallery(p);
     const exact = vars.filter(v => (!state.choice.size || v.size === state.choice.size) && (!state.choice.grade || v.grade === state.choice.grade));
     const variant = exact.length === 1 ? exact[0] : null;
-    if (!variant) { setGallery([p.image].filter(Boolean), p.name); return; }
+    if (!variant) { setGallery([], p.name); return; }
     const alt = [p.name, variant.size, variant.grade].filter(Boolean).join(' ');
     // The current inventory provides photos in upload order, including empty slots.
     // An explicitly empty variant gallery must not borrow another grade's image.
@@ -239,11 +243,11 @@
       setGallery(variant.photos, alt);
       return;
     }
-    setGallery([p.image].filter(Boolean), alt);
+    setGallery([], alt);
     if (!variant.sku) return;
     const live = await fetchVariantImages(variant.sku);
     if (token !== v4GalleryToken || state.activeProduct !== p || !$('productDialog').open) return;
-    setGallery(live.length ? live : [p.image].filter(Boolean), alt);
+    setGallery(live, alt);
   }
 
   async function fetchVariantImages(sku) {
@@ -275,7 +279,7 @@
       b.setAttribute('aria-label', `${alt || ''} — ${state.language === 'en' ? 'Photo' : 'Larawan'} ${index + 1}`);
       b.setAttribute('aria-pressed', String(index === 0));
       b.innerHTML = `<img src="${esc(url)}" data-gallery-source="${esc(url)}" alt="" loading="lazy" decoding="async">`;
-      b.onclick = () => selectGalleryImage(index);
+      b.onclick = event => {event.stopPropagation();selectGalleryImage(index);};
       thumbs.appendChild(b);
     });
     selectGalleryImage(selectedIndex);

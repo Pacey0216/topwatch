@@ -1,139 +1,61 @@
-// Variant selection hardening: size first, exact size-grade compatibility, grade-level pricing.
-function gradePriceFromProduct(p, grade) {
-  const k = cleanGrade(grade);
-  const gp = p && p.gradePrices ? p.gradePrices : {};
-  const direct = gp[k] ?? gp[String(k).toLowerCase()];
-  if (Number(direct) > 0) return Number(direct);
-  const legacyKey = `${k.replace(/\s+/g, '')}Price`;
-  return Number(p?.[legacyKey] || 0) || null;
-}
-
+// Variant selection uses only verified, available SKU records.
 function normalVariants(p) {
-  if (Array.isArray(p?.variants) && p.variants.length) {
-    return p.variants
-      .filter(v => Number(v.stock || 0) > 0 && v.active !== false)
-      .map(v => {
-        const grade = cleanGrade(v.grade);
-        const gradePrice = Number(gradePriceFromProduct(p, grade) || 0);
-        return {
-          sku: v.sku || v.variantSku || '',
-          size: String(v.size || '').trim(),
-          grade,
-          price: gradePrice > 0 ? gradePrice : Number(v.price ?? v.sellingPrice ?? p.price ?? 0),
-          stock: Number(v.stock || 0),
-          photos: Array.isArray(v.photos) ? v.photos : undefined,
-          photoSource: v.photoSource || ''
-        };
-      });
-  }
-
-  // Compatibility fallback for older API payloads. The deployed API should normally provide variants.
-  const sizes = parseSizes(p);
-  const grades = parseGrades(p);
-  const ss = sizes.length ? sizes : [''];
-  const gg = grades.length ? grades : [''];
-  const out = [];
-  ss.forEach(size => gg.forEach(grade => out.push({
-    sku: '',
-    size,
-    grade,
-    price: Number(gradePriceFromProduct(p, grade) ?? p.price ?? 0),
-    stock: Number(p.stock || 0),
-    photos: Array.isArray(p.photos) ? p.photos : undefined,
-    photoSource: p.photoSource || ''
-  })));
-  return out;
+  return window.InventoryModel ? window.InventoryModel.availableVariants(p) : (Array.isArray(p?.variants) ? p.variants.filter(v => v.sku && Number(v.stock) > 0 && v.active !== false) : []);
 }
 
 function openProfile(p, focus = false) {
+  const same = state.activeProduct && state.activeProduct.sku === p.sku;
+  const previous = same ? state.choice : {size:'',grade:''};
   state.activeProduct = p;
-  state.choice = { size: '', grade: '' };
-
   const vars = normalVariants(p);
-  const sizes = uniq(vars.map(v => v.size).filter(Boolean)).sort((a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0));
-  const gradeOrder = { Japan: 1, Swiss: 2, 'Super C': 3 };
-  const grades = uniq(vars.map(v => v.grade).filter(Boolean)).sort((a, b) => (gradeOrder[a] || 99) - (gradeOrder[b] || 99));
-
-  if (sizes.length === 1) state.choice.size = sizes[0];
-  if (grades.length === 1 && sizes.length <= 1) state.choice.grade = grades[0];
-
-  const sizeUI = sizes.length ? `<div class="variant-section"><div class="variant-label">${esc(t('selectSize'))}</div><div id="sizeTiles" class="size-tiles">${sizes.map(s => `<button type="button" class="size-tile${state.choice.size === s ? ' selected' : ''}" data-size="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>` : '';
-  const gradeUI = grades.length ? `<div class="variant-section"><div class="variant-label">${esc(t('selectGrade'))}</div><div id="gradeTiles" class="grade-tiles">${grades.map(g => gradeTile(g)).join('')}</div></div>` : '';
-  const specs = Object.entries(p.specs || {}).filter(([k]) => !['Available Sizes', 'Japan', 'Swiss', 'Super C'].includes(k)).map(([k, v]) => `<div class="spec-row"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('');
-
-  $('dialogBody').innerHTML = `<div class="product-profile"><div class="profile-image">${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}">` : '⌚'}</div><div class="profile-info"><div class="profile-sku">${esc(p.sku || '')}</div><h2>${esc(p.name || 'Unnamed Watch')}</h2><span class="stock-badge available">Available · ${Number(p.stock || 0)} left</span><p class="profile-description">${esc(p.description || '')}</p><div class="variant-picker">${sizeUI}${gradeUI}</div><div class="specs"><div class="spec-row"><span>${esc(t('brand'))}</span><span>${esc(p.category || p.brand || 'Watch')}</span></div>${specs}</div><button id="profileOrderNow" class="primary-action profile-order-button" type="button">${esc(t('orderNow'))}</button><div id="variantWarning" class="variant-warning hidden">${esc(t('choose'))}</div></div></div>`;
-
-  wireVariantButtons(p, vars, sizes, grades);
+  const sizes = uniq(vars.map(v => v.size).filter(Boolean)).sort((a,b) => (parseFloat(a)||0)-(parseFloat(b)||0));
+  const gradeOrder = {Japan:1,Swiss:2,'Super C':3};
+  const grades = uniq(vars.map(v => v.grade).filter(Boolean)).sort((a,b) => (gradeOrder[a]||99)-(gradeOrder[b]||99));
+  state.choice = {
+    size: sizes.includes(previous.size) ? previous.size : sizes.length === 1 ? sizes[0] : '',
+    grade: vars.some(v => v.grade === previous.grade && (!previous.size || v.size === previous.size)) ? previous.grade : ''
+  };
+  if (!state.choice.grade && grades.length === 1 && sizes.length <= 1) state.choice.grade = grades[0];
+  const sizeUI = sizes.length ? '<div class="variant-section"><div class="variant-label">'+esc(t('selectSize'))+'</div><div id="sizeTiles" class="size-tiles">'+sizes.map(s => '<button type="button" class="size-tile" data-size="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div></div>' : '';
+  const gradeUI = grades.length ? '<div class="variant-section"><div class="variant-label">'+esc(t('selectGrade'))+'</div><div id="gradeTiles" class="grade-tiles">'+grades.map(g => gradeTile(g)).join('')+'</div></div>' : '';
+  const publicSpecs = new Set(['Reference','Movement','Case Material','Dial','Strap','Water Resistance','Case','Material','Color','Gender']);
+  const specs = Object.entries(p.specs || {}).filter(([k,v]) => publicSpecs.has(k) && v).map(([k,v]) => '<div class="spec-row"><span>'+esc(k)+'</span><span>'+esc(v)+'</span></div>').join('');
+  const fil = state.language !== 'en';
+  const disclaimer = fil ? 'Replica ang mga relong ito at walang kaugnayan sa mga orihinal na brand.' : 'These watches are replicas and are not affiliated with the original brands.';
+  $('dialogBody').innerHTML = '<div class="product-profile"><div class="profile-image"></div><div class="profile-info"><h2>'+esc(p.name || 'Unnamed Watch')+'</h2><div id="selectedVariantSku" class="profile-sku"></div><span id="selectedVariantStock" class="stock-badge available"></span><div class="variant-picker">'+sizeUI+gradeUI+'</div><div class="specs"><div class="spec-row"><span>'+esc(t('brand'))+'</span><span>'+esc(p.category || p.brand || 'Watch')+'</span></div>'+specs+'</div><button id="profileOrderNow" class="primary-action profile-order-button" type="button">'+(fil ? 'Magtanong sa Messenger' : 'Ask on Messenger')+'</button><div id="variantWarning" class="variant-warning hidden">'+esc(t('choose'))+'</div></div></div><p class="popup-disclaimer">'+disclaimer+'</p>';
+  wireVariantButtons(p,vars,sizes,grades);
   if (!$('productDialog').open) $('productDialog').showModal();
-  if (focus) setTimeout(() => document.querySelector('.variant-picker')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
+  if (focus) setTimeout(() => document.querySelector('.variant-picker')?.scrollIntoView({block:'center',behavior:'smooth'}),80);
 }
 
 function gradeTile(g) {
   const m = gradeMeta(g);
-  return `<button type="button" class="grade-tile ${m.className}${state.choice.grade === g ? ' selected' : ''}" data-grade="${esc(g)}"><span class="grade-symbol">${m.symbol}</span><span class="grade-copy"><strong>${esc(g === 'Super C' ? 'Super C (1:1)' : g)}</strong><small>${esc(m.label)}</small></span></button>`;
+  return '<button type="button" class="grade-tile '+m.className+'" data-grade="'+esc(g)+'"><span class="grade-symbol">'+m.symbol+'</span><span class="grade-copy"><strong>'+esc(g === 'Super C' ? 'Super C (1:1)' : g)+'</strong><small>'+esc(m.label)+'</small></span></button>';
 }
 
-function wireVariantButtons(p, vars, sizes, grades) {
-  const sizeBtns = [...document.querySelectorAll('.size-tile')];
-  const gradeBtns = [...document.querySelectorAll('.grade-tile')];
-  const order = $('profileOrderNow');
-
-  const compatible = () => vars.filter(v =>
-    (!state.choice.size || v.size === state.choice.size) &&
-    (!state.choice.grade || v.grade === state.choice.grade)
-  );
-
+function wireVariantButtons(p,vars,sizes,grades) {
+  const sizeBtns = [...document.querySelectorAll('.size-tile')], gradeBtns = [...document.querySelectorAll('.grade-tile')], order = $('profileOrderNow');
+  const compatible = () => vars.filter(v => (!state.choice.size || v.size === state.choice.size) && (!state.choice.grade || v.grade === state.choice.grade));
   function refresh() {
-    // Size is always the first decision when there is more than one size.
-    sizeBtns.forEach(b => {
-      const size = b.dataset.size;
-      b.disabled = !vars.some(v => v.size === size);
-      b.classList.toggle('selected', state.choice.size === size);
-    });
-
-    if (state.choice.size && state.choice.grade && !vars.some(v => v.size === state.choice.size && v.grade === state.choice.grade)) {
-      state.choice.grade = '';
-    }
-
-    const mustPickSizeFirst = sizes.length > 1 && !state.choice.size;
-    const gradesForSize = uniq(vars.filter(v => !state.choice.size || v.size === state.choice.size).map(v => v.grade).filter(Boolean));
-
-    if (!mustPickSizeFirst && !state.choice.grade && gradesForSize.length === 1) {
-      state.choice.grade = gradesForSize[0];
-    }
-
-    gradeBtns.forEach(b => {
-      const grade = b.dataset.grade;
-      const ok = !mustPickSizeFirst && vars.some(v => v.grade === grade && (!state.choice.size || v.size === state.choice.size));
-      b.disabled = !ok;
-      b.classList.toggle('selected', state.choice.grade === grade && ok);
-    });
-
-    const needSize = sizes.length > 1;
-    const needGrade = grades.length > 1 || gradesForSize.length > 0;
-    const exact = compatible();
-    const ready = (!needSize || !!state.choice.size) && (!needGrade || !!state.choice.grade) && exact.length > 0;
+    sizeBtns.forEach(b => {b.disabled = !vars.some(v => v.size === b.dataset.size);b.classList.toggle('selected',state.choice.size === b.dataset.size);b.setAttribute('aria-pressed',String(state.choice.size === b.dataset.size));});
+    if (state.choice.size && state.choice.grade && !vars.some(v => v.size === state.choice.size && v.grade === state.choice.grade)) state.choice.grade = '';
+    const pickSize = sizes.length > 1 && !state.choice.size;
+    const allowedGrades = uniq(vars.filter(v => !state.choice.size || v.size === state.choice.size).map(v => v.grade));
+    if (!pickSize && !state.choice.grade && allowedGrades.length === 1) state.choice.grade = allowedGrades[0];
+    gradeBtns.forEach(b => {const ok = !pickSize && vars.some(v => v.grade === b.dataset.grade && (!state.choice.size || v.size === state.choice.size));b.disabled = !ok;b.classList.toggle('selected',state.choice.grade === b.dataset.grade && ok);b.setAttribute('aria-pressed',String(state.choice.grade === b.dataset.grade && ok));});
+    const exact = compatible(), ready = (!sizes.length || !!state.choice.size) && (!grades.length || !!state.choice.grade) && exact.length === 1;
     order.disabled = !ready;
-    $('variantWarning')?.classList.toggle('hidden', ready);
-
+    $('variantWarning')?.classList.toggle('hidden',ready);
+    text('selectedVariantSku',ready ? exact[0].sku : '');
+    text('selectedVariantStock',ready ? (state.language === 'en' ? exact[0].stock+' available' : 'May '+exact[0].stock+' piraso') : t('choose'));
+    window.TopWatchComparison?.refresh();
   }
-
-  sizeBtns.forEach(b => b.onclick = () => {
-    state.choice.size = b.dataset.size;
-    if (state.choice.grade && !vars.some(v => v.size === state.choice.size && v.grade === state.choice.grade)) state.choice.grade = '';
-    refresh();
-  });
-
-  gradeBtns.forEach(b => b.onclick = () => {
-    if (b.disabled) return;
-    state.choice.grade = b.dataset.grade;
-    refresh();
-  });
-
+  sizeBtns.forEach(b => b.onclick = () => {state.choice.size = b.dataset.size;refresh();});
+  gradeBtns.forEach(b => b.onclick = () => {if (!b.disabled) {state.choice.grade = b.dataset.grade;refresh();}});
   refresh();
-  order.onclick = () => {
-    const exact = compatible();
-    if (order.disabled || !exact.length) return;
-    sendOrder(p, exact[0]);
-  };
+  order.onclick = () => {const exact = compatible();if (!order.disabled && exact.length === 1) sendOrder(p,exact[0]);};
 }
+window.TopWatchDetails = () => {
+  const product = state.activeProduct, choices = product ? normalVariants(product).filter(v => v.size === state.choice.size && v.grade === state.choice.grade) : [];
+  return {product,variant:choices.length === 1 ? choices[0] : null};
+};
