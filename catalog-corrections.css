@@ -1,16 +1,18 @@
 /* Current catalog requirements, after the older responsive theme layers. */
+.catalog-shell,.hero-layout,.hero-layout.single-column{width:min(1080px,92%)}
 .product-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .top-carousel-track{gap:14px}
 .top-carousel-track .product-card{flex-basis:calc((100% - 42px)/4)!important}
 .product-card{align-self:start}
 .product-body{flex:none;padding:10px}
 .product-name{min-height:0;font-size:.95rem;margin:0;line-height:1.4}
-.product-photo{aspect-ratio:1}
+.product-photo{aspect-ratio:3/4}
+.product-photo img{object-fit:contain;object-position:center}
 .listing-image{display:block;width:100%;padding:0;border:0;border-radius:0;cursor:pointer;background:#111113;color:var(--text);font:inherit}
 .product-photo[role=button]{cursor:pointer}
 .product-photo:focus-visible{outline:3px solid var(--primary);outline-offset:-3px}
 .card-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:6px 0 0;padding:0}
-.card-actions button{min-height:32px;padding:5px;font-size:.75rem;line-height:1.1}
+.card-actions button{min-height:40px;padding:7px 5px;font-size:.8rem;line-height:1.2}
 .carousel-heading>div:first-child{min-width:0;flex:1}
 .carousel-heading h2,.catalog-title h2{overflow-wrap:anywhere}
 .carousel-controls{flex-shrink:0}
@@ -18,18 +20,29 @@
 #productDialog{width:min(1248px,92vw);max-width:92vw;max-height:92vh}
 #closeDialog{position:sticky;top:10px;display:block;margin:10px 10px -54px auto;min-width:44px;min-height:44px;z-index:5}
 .product-profile{padding-top:60px}
+.profile-image.v4-gallery{width:min(100%,52.5vh);width:min(100%,52.5dvh);justify-self:center}
+.v4-gallery-main{aspect-ratio:3/4}
+.v4-gallery-main img{object-fit:contain;object-position:center}
 .profile-info h2{font-size:clamp(1.9rem,3vw,3rem)}
 .spec-row>span{min-width:0;overflow-wrap:anywhere}
+@media(max-width:900px){
+  .product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .top-carousel-track .product-card{flex-basis:calc((100% - 14px)/2)!important}
+}
 @media(max-width:620px){
-  .product-grid{gap:5px}
-  .top-carousel-track{gap:5px}
-  .top-carousel-track .product-card{flex-basis:calc((100% - 15px)/4)!important}
-  .product-body{padding:6px 4px}
-  .product-name{font-size:10px;line-height:1.4}
-  .card-actions button{font-size:8px;line-height:1;padding:2px 1px;min-height:30px}
+  .product-grid{gap:12px}
+  .top-carousel-track{gap:12px}
+  .top-carousel-track .product-card{flex-basis:calc((100% - 12px)/2)!important}
+  .product-body{padding:10px}
+  .product-name{font-size:.9rem;line-height:1.4}
+  .card-actions button{font-size:.8rem;line-height:1.2;padding:7px 5px;min-height:44px}
   #productDialog{width:96vw;max-width:96vw;max-height:94dvh}
   .product-profile{padding:60px 10px 12px;gap:16px}
   .catalog-title{flex-wrap:wrap;align-items:start}
   .catalog-intro h2,.catalog-title h2{font-size:2rem}
+}
+@media(max-width:520px){
+  .product-grid{grid-template-columns:minmax(0,1fr)}
+  .top-carousel-track .product-card{flex-basis:100%!important}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.product-card{transition:none}}

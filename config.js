@@ -7,7 +7,7 @@ window.STORE_CONFIG = {
   "facebookUrl": "https://m.me/61587432892689",
   "phoneDisplay": "0906 160 6316",
   "phoneUrl": "tel:+639061606316",
-  "email": "kidaweeda977@yahoo.com",
+  "email": "support@topwatch.trade",
   "whatsappDisplay": "+63 906 160 6316",
   "whatsappUrl": "https://wa.me/639061606316",
   "currency": "PHP",

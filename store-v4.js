@@ -235,7 +235,9 @@
     enhanceGallery(p);
     const exact = vars.filter(v => (!state.choice.size || v.size === state.choice.size) && (!state.choice.grade || v.grade === state.choice.grade));
     const variant = exact.length === 1 ? exact[0] : null;
-    if (!variant) { setGallery([], p.name); return; }
+    // Show the model's overview while options are unresolved; selected variants
+    // below use only their own gallery, even when that gallery is explicitly empty.
+    if (!variant) { setGallery([p.image].filter(Boolean), p.name); return; }
     const alt = [p.name, variant.size, variant.grade].filter(Boolean).join(' ');
     // The current inventory provides photos in upload order, including empty slots.
     // An explicitly empty variant gallery must not borrow another grade's image.

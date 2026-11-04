@@ -48,11 +48,13 @@
     if(!visible(v)||!consistent(p,v))return null;
     const sku=text(get(v,'sku','variantSku','Variant SKU')),stock=num(get(v,'stock','Stock Qty'));
     if(!sku||!stock)return null;
-    const formSource=get(v,'photoSource')==='form-upload-order';
-    const seen=new Set(),photos=(formSource&&Array.isArray(v.photos)?v.photos:[]).slice(0,5).map(item=>{
+    // Both upload pipelines return photos already matched to this exact variant SKU.
+    const photoSource=text(get(v,'photoSource'));
+    const trustedPhotos=['form-upload-order','watch-assistant-upload-order'].includes(photoSource);
+    const seen=new Set(),photos=(trustedPhotos&&Array.isArray(v.photos)?v.photos:[]).slice(0,5).map(item=>{
       const image=url(typeof item==='string'?item:item?.url);if(!image||seen.has(image))return null;seen.add(image);return image;
     });
-    return {sku,variantSku:sku,productId:productFields(p).id,name:productFields(p).name,reference:text(get(v,'reference','Reference Code'))||productFields(p).reference,size:size(get(v,'size','Size')),grade:grade(get(v,'grade','Grade')),stock,active:true,photos,photoSource:formSource?'form-upload-order':''};
+    return {sku,variantSku:sku,productId:productFields(p).id,name:productFields(p).name,reference:text(get(v,'reference','Reference Code'))||productFields(p).reference,size:size(get(v,'size','Size')),grade:grade(get(v,'grade','Grade')),stock,active:true,photos,photoSource:trustedPhotos?photoSource:''};
   }
   function availableVariants(p){return visible(p)?(Array.isArray(p.variants)?p.variants:[]).map(v=>cleanVariant(v,p)).filter(Boolean):[];}
   function normalizeInventory(payload){

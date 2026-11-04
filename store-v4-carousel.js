@@ -1,7 +1,7 @@
 // Best-seller showcase: match the responsive catalog columns and stop at the final page.
 (() => {
   let page = 0;
-  const perPage = () => 4;
+  const perPage = () => window.matchMedia('(max-width:520px)').matches ? 1 : window.matchMedia('(max-width:900px)').matches ? 2 : 4;
   const lastPage = count => Math.max(0, Math.ceil(count / perPage()) - 1);
 
   renderTop = function() {
