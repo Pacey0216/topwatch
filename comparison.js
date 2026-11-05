@@ -79,7 +79,7 @@
   function details(selection) {
     const p=selection.product,v=selection.variant,c=copy();
     const rows=[[c.grade,grade(v.grade)],[c.size,v.size],['SKU',v.sku],[t('reference'),p.reference||p.specs?.Reference]];
-    const message=[c.inquiry,p.name,v.sku,grade(v.grade),v.size].filter(Boolean).join(' | ');
+    const message=orderMessage(p,v);
     return `<h3>${esc(p.name)}</h3><dl>${rows.filter(([,value])=>value).map(([name,value])=>`<div><dt>${esc(name)}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl><a class="primary-action compare-messenger" href="${esc(messenger(message))}" target="_blank" rel="noopener noreferrer">${esc(c.ask)}</a>`;
   }
   function render() {

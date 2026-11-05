@@ -68,7 +68,7 @@ function requiresChoice(p){const v=normalVariants(p);return uniq(v.map(x=>x.size
 function card(p){
  const a=document.createElement('article');a.className='product-card';a.dataset.sku=p.sku;
  const image=p.image?'<img src="'+esc(p.image)+'" alt="'+esc(p.name)+'" loading="lazy">':'<span aria-hidden="true">⌚</span>';
-  a.innerHTML='<button type="button" class="product-photo listing-image" aria-label="'+esc(t('details')+': '+p.name)+'">'+image+'</button><div class="product-body"><h3 class="product-name">'+esc(p.name||'Unnamed Watch')+'</h3><div class="card-actions"><button class="details-button" type="button">'+esc(t('details'))+'</button><button class="inquire-button order-now" type="button">'+(state.language==='en'?'Inquire':'Magtanong')+'</button></div></div>';
+  a.innerHTML='<button type="button" class="product-photo listing-image" aria-label="'+esc(t('details')+': '+p.name)+'">'+image+'</button><div class="product-body"><h3 class="product-name" title="'+esc(p.name||'Unnamed Watch')+'">'+esc(p.name||'Unnamed Watch')+'</h3><div class="card-actions"><button class="details-button" type="button">'+esc(t('details'))+'</button><button class="inquire-button order-now" type="button">'+(state.language==='en'?'Inquire':'Magtanong')+'</button></div></div>';
  a.querySelectorAll('.listing-image,.details-button').forEach(button=>button.onclick=event=>{event.stopPropagation();openProfile(p)});
  a.querySelector('.inquire-button').onclick=event=>{event.stopPropagation();quickOrder(p);};return a;
 }
@@ -100,7 +100,7 @@ function wireVariantButtons(p,vars,sizes,grades){
  sizeBtns.forEach(b=>b.onclick=()=>{state.choice.size=b.dataset.size;refresh()});gradeBtns.forEach(b=>b.onclick=()=>{state.choice.grade=b.dataset.grade;refresh()});refresh();order.onclick=()=>{const exact=compatible();if(order.disabled||!exact.length)return;sendOrder(p,exact.sort((a,b)=>a.price-b.price)[0])};
 }
 function sendOrder(p,v){const msg=orderMessage(p,v);try{navigator.clipboard?.writeText(msg)}catch(e){}window.open(messenger(msg),'_blank','noopener')}
-function orderMessage(p,v){const s=p.specs||{};return [state.language==='en'?'Hi! How much is this watch, and is it still available?':'Hi! Magkano po ang relong ito, at available pa po ba?',p.name||'',v.sku||p.sku||'',v.grade==='Super C'?'Super C (1:1)':v.grade||'',v.size||'',p.reference||s.Reference||''].filter(Boolean).join(' | ')}
+function orderMessage(p,v){return `Hi! How much is this watch SKU ${v.sku} ?`}
 function messenger(msg){const b=C.messengerUrl||C.facebookUrl||'#',sep=b.includes('?')?'&':'?';return b==='#'?b:`${b}${sep}text=${encodeURIComponent(msg)}`}
 
 function setupContacts(){if($('contactPhone')){$('contactPhone').href=C.phoneUrl||'#';text('contactPhoneText',C.phoneDisplay||'')}if($('contactEmail')){$('contactEmail').href=C.email?`mailto:${C.email}`:'#';text('contactEmailText',C.email||'')}if($('contactWhatsapp')){$('contactWhatsapp').href=C.whatsappUrl||'#';text('contactWhatsappText',C.whatsappDisplay||'')}if($('contactFacebook'))$('contactFacebook').href=C.messengerUrl||C.facebookUrl||'#';$('requestWatchLink')?.addEventListener('click',e=>{e.preventDefault();window.open(messenger(state.language==='fil'?'Hinahanap ko: ':'Looking for: '),'_blank','noopener')});$('contactToggle')?.addEventListener('click',e=>{e.stopPropagation();$('contactPanel')?.classList.toggle('hidden')});$('contactPanel')?.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',()=>$('contactPanel')?.classList.add('hidden'))}
