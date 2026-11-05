@@ -17,7 +17,7 @@
 .carousel-heading h2,.catalog-title h2{overflow-wrap:anywhere}
 .carousel-controls{flex-shrink:0}
 .welcome-card{max-width:100%}
-#productDialog{width:min(1248px,92vw);max-width:92vw;max-height:92vh}
+#productDialog{width:min(1040px,92vw);max-width:92vw;max-height:92vh}
 #closeDialog{position:sticky;top:10px;display:block;margin:10px 10px -54px auto;min-width:44px;min-height:44px;z-index:5}
 .product-profile{padding-top:60px}
 .profile-image.v4-gallery{width:min(100%,52.5vh);width:min(100%,52.5dvh);justify-self:center}
@@ -46,3 +46,61 @@
   .top-carousel-track .product-card{flex-basis:100%!important}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.product-card{transition:none}}
+
+/* Fixed title allocation keeps every catalog and featured tile the same height. */
+.product-name{height:2.8em;min-height:2.8em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.product-body{flex:1}.card-actions{margin-top:auto;padding-top:6px}
+
+/* Complete product information stays in the same view as the photo. */
+#productDialog{max-height:min(702px,92dvh);padding:0;overflow:auto}
+#closeDialog{position:sticky;top:6px;right:6px;margin:6px 6px -50px auto}
+.product-profile{box-sizing:border-box;height:auto;min-height:0;padding:50px 24px 24px;gap:28px;grid-template-columns:minmax(0,.42fr) minmax(0,.58fr);align-items:start}
+.profile-info{display:flex;flex-direction:column;justify-content:flex-start;gap:10px;padding:0;min-height:0}
+.profile-info h2{font-size:clamp(1.5rem,2.2vw,2rem);line-height:1.12;margin:0;display:block;overflow:visible;-webkit-line-clamp:unset;overflow-wrap:anywhere}
+.profile-description{margin:0;font-size:.9375rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.profile-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.profile-sku{font-size:.8rem;margin:0}.profile-meta .stock-badge{margin:0}
+.variant-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:6px 0 0}
+.variant-section{gap:6px;align-content:start;min-width:0}.variant-label{font-size:.7rem}
+.size-tiles,.grade-tiles{display:flex;flex-wrap:wrap;gap:4px;padding:0;overflow:visible}
+.size-tile{height:44px;min-width:80px;padding:6px 12px}
+.grade-tile{display:flex;flex:0 0 auto;width:auto;justify-content:center;min-width:80px;min-height:44px;padding:6px 12px;gap:0;text-align:center;border-radius:9px}
+.grade-symbol,.grade-copy small{display:none}.grade-copy strong{font-size:.82rem}
+.profile-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:6px}
+.profile-actions button{margin:0;min-height:44px;padding:8px;font-size:.9rem;line-height:1.2}
+.variant-warning{margin:0;font-size:.8rem}
+.profile-variant-select{width:100%;min-width:0;min-height:44px;background:#19191c;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:16px;color-scheme:dark}
+.profile-info .specs{margin:6px 0 0;font-size:.82rem;line-height:1.35}
+.profile-info .spec-row{padding:6px 0;gap:12px}
+.profile-info .spec-row>span:last-child{text-align:right}
+#productDialog [hidden]{display:none!important}
+.profile-image.v4-gallery{height:auto;width:100%;grid-template-rows:none;align-content:start;gap:8px}
+.v4-gallery-main{height:var(--profile-photo-height,400px);width:auto;max-width:100%;aspect-ratio:3/4;justify-self:center;min-height:0}
+.v4-gallery-thumbs{justify-content:center;padding:2px;flex-wrap:wrap;overflow:visible;gap:5px}
+.v4-gallery-thumb{width:44px;height:44px;flex-basis:44px}
+#productDialog :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+@media(max-width:699px) and (min-height:501px){
+  .product-profile{grid-template-columns:minmax(0,1fr);gap:12px;padding:48px 12px 12px}
+  .profile-info{gap:8px}.profile-info h2{font-size:1.4rem}
+  .profile-description{font-size:.9rem;line-height:1.45}
+  .variant-picker{gap:10px;margin:0}.profile-actions,.profile-info .specs{margin-top:0}
+  .profile-actions{grid-template-columns:minmax(0,1fr)}.profile-actions button{font-size:.8rem}
+  .profile-meta{gap:4px 8px}.profile-meta .stock-badge{font-size:.7rem}
+  .profile-info .spec-row{padding:4px 0}
+}
+@media(max-width:620px){#productDialog{max-height:min(702px,94dvh)}}
+@media(max-height:600px){
+  .product-profile{padding:46px 12px 8px;gap:8px}
+  .profile-info{gap:6px}.profile-info h2{font-size:1.3rem}
+  .profile-description{font-size:.9rem;line-height:1.45}
+  .variant-picker{gap:10px;margin:0}.profile-actions,.profile-info .specs{margin-top:0}
+  .profile-actions{grid-template-columns:minmax(0,1fr)}.profile-actions button{font-size:.8rem}
+  .profile-info .spec-row{padding:4px 0}
+}
+
+
+@media(min-width:700px) and (max-height:600px){.product-profile{grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr)}}
+@media(max-width:380px){.product-profile .size-tile,.product-profile .grade-tile{min-width:64px;padding:6px 8px}}
+
+/* Reserve mobile space for the full watch image and essential controls. */
+@media(max-width:699px),(max-width:900px) and (max-height:500px){#productDialog .profile-description{display:none}}

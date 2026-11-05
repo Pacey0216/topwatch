@@ -14,7 +14,6 @@
 
   const baseRenderProducts = renderProducts;
   renderProducts = function() {
-    syncFilterOptions();
     applyV4Filters();
   };
 
@@ -55,7 +54,7 @@
   wireVariantButtons = function(p, vars, sizes, grades) {
     baseWireVariantButtons(p, vars, sizes, grades);
     const refreshGallery = () => updateGalleryForChoice(p, vars);
-    document.querySelectorAll('.size-tile,.grade-tile').forEach(button => button.addEventListener('click', refreshGallery));
+    document.querySelectorAll('.profile-variant-select').forEach(select => select.addEventListener('change', refreshGallery));
     updateGalleryForChoice(p, vars);
   };
 
@@ -88,8 +87,19 @@
   }
 
   function syncFilterOptions() {
-    const brands = [...new Set(state.products.map(p => String(p.category || p.brand || '').trim()).filter(Boolean))].sort();
-    const grades = ['Japan', 'Swiss', 'Super C'].filter(g => state.products.some(p => productGrades(p).includes(g)));
+    // Each facet is constrained by the other facet, never by itself.
+    // Validate against inventory (not the search text), so a zero-result search
+    // does not silently discard a shopper's otherwise valid selections.
+    const available = state.products.filter(p => productGrades(p).length);
+    const brandOf = p => String(p.category || p.brand || '').trim().toLowerCase();
+    let brand = $('catalogBrand')?.value || '', grade = $('catalogGrade')?.value || '';
+    if (brand && !available.some(p => brandOf(p) === brand)) brand = '';
+    if (grade && !available.some(p => productGrades(p).includes(grade))) grade = '';
+    if (brand && grade && !available.some(p => brandOf(p) === brand && productGrades(p).includes(grade))) grade = '';
+    if ($('catalogBrand')) $('catalogBrand').value = brand;
+    if ($('catalogGrade')) $('catalogGrade').value = grade;
+    const brands = [...new Set(available.filter(p => !grade || productGrades(p).includes(grade)).map(p => String(p.category || p.brand || '').trim()).filter(Boolean))].sort();
+    const grades = ['Japan', 'Swiss', 'Super C'].filter(g => available.some(p => (!brand || brandOf(p) === brand) && productGrades(p).includes(g)));
     syncSelectOptions('catalogBrand', brands.map(brand => ({ value: brand.toLowerCase(), label: brand })));
     syncSelectOptions('catalogGrade', grades.map(grade => ({ value: grade, label: grade === 'Super C' ? 'Super C (1:1)' : grade })));
     applyV4Language();
@@ -158,6 +168,7 @@
   }
 
   function applyV4Filters() {
+    syncFilterOptions();
     const searchValue = $('catalogSearch')?.value || '';
     const q = searchValue.trim().toLowerCase();
     const selectedBrand = $('catalogBrand')?.value || '';
